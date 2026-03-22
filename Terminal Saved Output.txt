@@ -1,0 +1,48 @@
+Last login: Fri Mar 13 20:54:53 on ttys000
+(base) goluquinton@GOLUs-MacBook-Air ~ % nano .env
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  UW PICO 5.09                       File: .env                       Modified  
+
+GEMINI_API_KEY=AIzaSyB6_F1SVLRdeFN5D3HpVbjX4oKakgqkpJM
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+^G Get Help  ^O WriteOut  ^R Read File ^Y Prev Pg   ^K Cut Text  ^C Cur Pos   
+^X Exit      ^J Justify   ^W Where is  ^V Next Pg   ^U UnCut Text^T To Spell  
