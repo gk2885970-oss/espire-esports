@@ -1,20 +1,20 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Espire Esports
 
-# Run and deploy your AI Studio app
+Espire Esports is a competitive esports platform where players can join tournaments,
+track leaderboards, and compete in games like BGMI and Free Fire.
 
-This contains everything you need to run your app locally.
+## Features
+- Tournament Management
+- Live Leaderboard
+- Team Registration
+- Match Result System
 
-View your app in AI Studio: https://ai.studio/apps/9900b9b3-9a87-4881-9592-ac204565030d
+## Technology
+- Frontend: Vite + TypeScript
+- Backend: Node.js
+- Database: SQLite
 
-## Run Locally
+## Developer
+Golu Quinton
 
-**Prerequisites:**  Node.js
 
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
