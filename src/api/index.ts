@@ -103,4 +103,29 @@ Give a concise, practical coaching tip in 2-3 sentences. Be direct and actionabl
     });
     return res.json();
   },
+sendOTP: async (phone: string) => {
+  const res = await fetch(`${API_BASE}/auth/send-otp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone }),
+  });
+  return res.json();
+},
+
+verifyOTP: async (phone: string, otp: string) => {
+  const res = await fetch(`${API_BASE}/auth/verify-otp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone, otp }),
+  });
+  return res.json();
+},
+
+guestLogin: async () => {
+  const res = await fetch(`${API_BASE}/auth/guest`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  return res.json();
+},
 };

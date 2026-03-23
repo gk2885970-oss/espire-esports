@@ -5,7 +5,7 @@ import * as matchController from '../controllers/matchController.js';
 import * as aiController from '../controllers/aiController.js';
 import * as leaderboardController from '../controllers/leaderboardController.js';
 import * as achievementController from '../controllers/achievementController.js';
-
+import * as authController from '../controllers/authController.js';
 const router = express.Router();
 
 // User routes
@@ -30,5 +30,10 @@ router.get('/leaderboard', leaderboardController.getLeaderboard);
 // Achievement routes
 router.get('/user/:userId/achievements', achievementController.getAchievements);
 router.post('/achievements/progress', achievementController.updateAchievementProgress);
+
+
+router.post('/auth/send-otp', authController.sendOTP);
+router.post('/auth/verify-otp', authController.verifyOTP);
+router.post('/auth/guest', authController.guestLogin);
 
 export default router;

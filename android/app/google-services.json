@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1067059675791",
+    "project_id": "espire-esports",
+    "storage_bucket": "espire-esports.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1067059675791:android:d2df35a766be6f12f266fa",
+        "android_client_info": {
+          "package_name": "com.espire.esports"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAxczelqA5h55I8QyOwDWzO4pNBr6zTlwE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import {
   Home,
   Trophy,
@@ -29,11 +29,15 @@ import Achievements from './pages/Achievements';
 import Privacy from './pages/Privacy';
 import Premium from './pages/Premium';
 import PointCalc from './pages/PointCalc';
+import Login from './pages/Login';
 
 // Training Pages
 import TrainingModuleContainer from './pages/training/TrainingModuleContainer';
 import DrillDetail from './pages/training/DrillDetail';
 import AimTrainerGame from './pages/training/AimTrainerGame';
+
+// Auth check helper
+const isLoggedIn = () => !!localStorage.getItem('token');
 
 const BottomNav = () => {
   const location = useLocation();
@@ -103,39 +107,46 @@ export default function App() {
   return (
     <Router>
       <div className="mobile-container bg-background">
-        <Header />
+
+        {/* Header — login page pe nahi dikhega */}
+        {isLoggedIn() && <Header />}
 
         <main className="flex-1 overflow-y-auto pb-24 px-4">
           <AnimatePresence mode="wait">
             <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/home" element={<Dashboard />} />
-              <Route path="/play" element={<TournamentList />} />
-              <Route path="/ai" element={<AICoach />} />
-              <Route path="/ai-coach" element={<AICoach />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/profile/stats" element={<Performance />} />
-              <Route path="/profile/tournaments" element={<TournamentList />} />
-              <Route path="/profile/achievements" element={<Achievements />} />
-              <Route path="/tournament/:id" element={<TournamentAutomation />} />
-              <Route path="/leaderboard" element={<Leaderboard />} />
-              <Route path="/wallet" element={<WalletPage />} />
-              <Route path="/live-session" element={<LiveSession />} />
-              <Route path="/privacy" element={<Privacy />} />
-              <Route path="/premium" element={<Premium />} />
-              <Route path="/community" element={<Community />} />
-              <Route path="/live-coaching" element={<LiveCoaching />} />
-              <Route path="/pointcalc" element={<PointCalc />} />
-              {/* Training Routes */}
-              <Route path="/training/:moduleId" element={<TrainingModuleContainer />} />
-              <Route path="/training/drill/:id" element={<DrillDetail />} />
-              <Route path="/training/aim" element={<AimTrainerGame />} />
+              {/* Login Route — public */}
+              <Route path="/login" element={<Login />} />
+
+              {/* Protected Routes */}
+              <Route path="/" element={isLoggedIn() ? <Dashboard /> : <Navigate to="/login" />} />
+              <Route path="/home" element={isLoggedIn() ? <Dashboard /> : <Navigate to="/login" />} />
+              <Route path="/play" element={isLoggedIn() ? <TournamentList /> : <Navigate to="/login" />} />
+              <Route path="/ai" element={isLoggedIn() ? <AICoach /> : <Navigate to="/login" />} />
+              <Route path="/ai-coach" element={isLoggedIn() ? <AICoach /> : <Navigate to="/login" />} />
+              <Route path="/profile" element={isLoggedIn() ? <Profile /> : <Navigate to="/login" />} />
+              <Route path="/profile/stats" element={isLoggedIn() ? <Performance /> : <Navigate to="/login" />} />
+              <Route path="/profile/tournaments" element={isLoggedIn() ? <TournamentList /> : <Navigate to="/login" />} />
+              <Route path="/profile/achievements" element={isLoggedIn() ? <Achievements /> : <Navigate to="/login" />} />
+              <Route path="/tournament/:id" element={isLoggedIn() ? <TournamentAutomation /> : <Navigate to="/login" />} />
+              <Route path="/leaderboard" element={isLoggedIn() ? <Leaderboard /> : <Navigate to="/login" />} />
+              <Route path="/wallet" element={isLoggedIn() ? <WalletPage /> : <Navigate to="/login" />} />
+              <Route path="/live-session" element={isLoggedIn() ? <LiveSession /> : <Navigate to="/login" />} />
+              <Route path="/privacy" element={isLoggedIn() ? <Privacy /> : <Navigate to="/login" />} />
+              <Route path="/premium" element={isLoggedIn() ? <Premium /> : <Navigate to="/login" />} />
+              <Route path="/community" element={isLoggedIn() ? <Community /> : <Navigate to="/login" />} />
+              <Route path="/live-coaching" element={isLoggedIn() ? <LiveCoaching /> : <Navigate to="/login" />} />
+              <Route path="/pointcalc" element={isLoggedIn() ? <PointCalc /> : <Navigate to="/login" />} />
+              <Route path="/training/:moduleId" element={isLoggedIn() ? <TrainingModuleContainer /> : <Navigate to="/login" />} />
+              <Route path="/training/drill/:id" element={isLoggedIn() ? <DrillDetail /> : <Navigate to="/login" />} />
+              <Route path="/training/aim" element={isLoggedIn() ? <AimTrainerGame /> : <Navigate to="/login" />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </AnimatePresence>
         </main>
 
-        <BottomNav />
+        {/* BottomNav — login page pe nahi dikhega */}
+        {isLoggedIn() && <BottomNav />}
+
       </div>
     </Router>
   );
