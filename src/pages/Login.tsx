@@ -1,75 +1,97 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../api/index';
-
-type Step = 'landing' | 'phone' | 'otp' | 'captcha';
+import {
+  auth,
+  googleProvider,
+  signInWithPopup,
+  signInAnonymously,
+  RecaptchaVerifier,
+  signInWithPhoneNumber
+} from '../firebase';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [step, setStep] = useState<Step>('landing');
+  const [step, setStep] = useState<'landing' | 'phone' | 'otp'>('landing');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
-  const [otpSent, setOtpSent] = useState('');
-  const [captchaQ, setCaptchaQ] = useState({ q: '', answer: 0 });
+  const [confirm, setConfirm] = useState<any>(null);
+  const [captchaNum, setCaptchaNum] = useState({ a: 0, b: 0 });
   const [captchaInput, setCaptchaInput] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const recaptchaRef = useRef<any>(null);
 
-  // Generate math captcha
-  const generateCaptcha = () => {
+  useEffect(() => {
     const a = Math.floor(Math.random() * 10) + 1;
     const b = Math.floor(Math.random() * 10) + 1;
-    setCaptchaQ({ q: `${a} + ${b} = ?`, answer: a + b });
-  };
+    setCaptchaNum({ a, b });
+  }, []);
 
-  // STEP 1 — Send OTP
-  const handleSendOTP = async () => {
-    if (phone.length !== 10) return setError('Valid 10-digit number daalo');
+  // Google Login
+  const handleGoogleLogin = async () => {
     setLoading(true);
     try {
-      const res = await api.sendOTP(phone);
-      setOtpSent(res.otp); // dev mode mein otp return hoga
-      generateCaptcha();
-      setStep('otp');
-      setError('');
-    } catch {
-      setError('OTP bhejne mein error aaya');
+      const result = await signInWithPopup(auth, googleProvider);
+      localStorage.setItem('token', await result.user.getIdToken());
+      localStorage.setItem('userId', result.user.uid);
+      navigate('/home');
+    } catch (e: any) {
+      setError('Google sign in failed. Please try again.');
     }
     setLoading(false);
-  };
-
-  // STEP 2 — Verify OTP + Captcha
-  const handleVerifyOTP = async () => {
-    if (otp.length !== 6) return setError('6 digit OTP daalo');
-    if (parseInt(captchaInput) !== captchaQ.answer)
-      return setError('Captcha galat hai!');
-    setLoading(true);
-    try {
-      const res = await api.verifyOTP(phone, otp);
-      localStorage.setItem('token', res.token);
-      localStorage.setItem('userId', res.userId);
-      navigate('/dashboard');
-    } catch {
-      setError('OTP galat hai ya expire ho gaya');
-    }
-    setLoading(false);
-  };
-
-  // Google OAuth
-  const handleGoogleLogin = () => {
-    window.location.href = '/api/auth/google';
   };
 
   // Guest Login
   const handleGuestLogin = async () => {
     setLoading(true);
     try {
-      const res = await api.guestLogin();
-      localStorage.setItem('token', res.token);
-      localStorage.setItem('userId', res.userId);
-      navigate('/dashboard');
-    } catch {
-      setError('Guest login failed');
+      const result = await signInAnonymously(auth);
+      localStorage.setItem('token', await result.user.getIdToken());
+      localStorage.setItem('userId', result.user.uid);
+      navigate('/home');
+    } catch (e: any) {
+      setError('Guest login failed. Please try again.');
+    }
+    setLoading(false);
+  };
+
+  // Send OTP
+  const handleSendOTP = async () => {
+    if (phone.length !== 10) return setError('Please enter a valid 10-digit number');
+    if (parseInt(captchaInput) !== captchaNum.a + captchaNum.b)
+      return setError('Captcha answer is incorrect!');
+
+    setLoading(true);
+    try {
+      if (!recaptchaRef.current) {
+        recaptchaRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          size: 'invisible',
+        });
+      }
+      const confirmation = await signInWithPhoneNumber(
+        auth, `+91${phone}`, recaptchaRef.current
+      );
+      setConfirm(confirmation);
+      setStep('otp');
+      setError('');
+    } catch (e: any) {
+      setError('Failed to send OTP. Check your number and try again.');
+      console.error(e);
+    }
+    setLoading(false);
+  };
+
+  // Verify OTP
+  const handleVerifyOTP = async () => {
+    if (otp.length !== 6) return setError('Please enter the 6-digit OTP');
+    setLoading(true);
+    try {
+      const result = await confirm.confirm(otp);
+      localStorage.setItem('token', await result.user.getIdToken());
+      localStorage.setItem('userId', result.user.uid);
+      navigate('/home');
+    } catch (e: any) {
+      setError('Incorrect OTP. Please try again.');
     }
     setLoading(false);
   };
@@ -81,6 +103,8 @@ export default function Login() {
       alignItems: 'center', justifyContent: 'center',
       fontFamily: 'sans-serif', color: 'white', padding: '20px'
     }}>
+      <div id="recaptcha-container" />
+
       {/* Logo */}
       <div style={{ marginBottom: '40px', textAlign: 'center' }}>
         <h1 style={{ fontSize: '2.5rem', color: '#7c3aed', margin: 0 }}>⚡ ESPIRE</h1>
@@ -93,34 +117,33 @@ export default function Login() {
         border: '1px solid #2a2a3a'
       }}>
 
-        {/* LANDING STEP */}
+        {/* LANDING */}
         {step === 'landing' && (
           <>
-            <h2 style={{ textAlign: 'center', marginBottom: '24px' }}>Welcome Back!</h2>
+            <h2 style={{ textAlign: 'center', marginBottom: '24px' }}>Welcome to Espire</h2>
 
-            {/* Google Login */}
-            <button onClick={handleGoogleLogin} style={btnStyle('#fff', '#000')}>
+            <button onClick={handleGoogleLogin} disabled={loading} style={btnStyle('#fff', '#000')}>
               <img src="https://www.google.com/favicon.ico" width={18} style={{ marginRight: 8 }} />
-              Google se Login karo
+              Continue with Google
             </button>
 
-            <div style={{ textAlign: 'center', margin: '16px 0', color: '#555' }}>— ya —</div>
+            <div style={{ textAlign: 'center', margin: '16px 0', color: '#555' }}>— or —</div>
 
-            {/* Phone Login */}
             <button onClick={() => setStep('phone')} style={btnStyle('#7c3aed', '#fff')}>
-              📱 Mobile Number se Login
+               Continue with Mobile Number
             </button>
 
-            <div style={{ textAlign: 'center', margin: '16px 0', color: '#555' }}>— ya —</div>
+            <div style={{ textAlign: 'center', margin: '16px 0', color: '#555' }}>— or —</div>
 
-            {/* Guest Login */}
-            <button onClick={handleGuestLogin} style={btnStyle('#1a1a2e', '#888', '1px solid #333')}>
-              👤 Guest ke taur pe continue karo
+            <button onClick={handleGuestLogin} disabled={loading} style={btnStyle('#1a1a2e', '#666', '1px solid #333')}>
+               Continue as Guest
             </button>
+
+            {error && <p style={errorStyle}>{error}</p>}
           </>
         )}
 
-        {/* PHONE STEP */}
+        {/* PHONE + CAPTCHA */}
         {step === 'phone' && (
           <>
             <h2 style={{ marginBottom: '24px' }}>📱 Mobile Number</h2>
@@ -133,50 +156,50 @@ export default function Login() {
                 style={inputStyle}
               />
             </div>
-            {error && <p style={errorStyle}>{error}</p>}
-            <button onClick={handleSendOTP} disabled={loading} style={btnStyle('#7c3aed', '#fff')}>
-              {loading ? 'Bhej raha hun...' : 'OTP Bhejo'}
-            </button>
-            <button onClick={() => setStep('landing')} style={backBtn}>← Wapas</button>
-          </>
-        )}
 
-        {/* OTP + CAPTCHA STEP */}
-        {step === 'otp' && (
-          <>
-            <h2 style={{ marginBottom: '8px' }}>🔐 OTP Verify karo</h2>
-            <p style={{ color: '#888', marginBottom: '20px', fontSize: '14px' }}>
-              +91 {phone} pe bheja gaya
-            </p>
-
-            <input
-              type="tel" maxLength={6} value={otp}
-              onChange={e => setOtp(e.target.value.replace(/\D/, ''))}
-              placeholder="6 digit OTP"
-              style={{ ...inputStyle, letterSpacing: '8px', fontSize: '20px', textAlign: 'center' }}
-            />
-
-            {/* Captcha */}
+            {/* Math Captcha */}
             <div style={{
               background: '#0a0a1a', borderRadius: '8px',
               padding: '16px', margin: '16px 0', textAlign: 'center'
             }}>
-              <p style={{ color: '#aaa', marginBottom: '8px', fontSize: '13px' }}>Captcha solve karo:</p>
-              <p style={{ fontSize: '22px', fontWeight: 'bold', color: '#7c3aed' }}>{captchaQ.q}</p>
+              <p style={{ color: '#aaa', fontSize: '13px', marginBottom: '8px' }}>Solve to verify:</p>
+              <p style={{ fontSize: '22px', fontWeight: 'bold', color: '#7c3aed' }}>
+                {captchaNum.a} + {captchaNum.b} = ?
+              </p>
               <input
                 type="number" value={captchaInput}
                 onChange={e => setCaptchaInput(e.target.value)}
-                placeholder="Answer"
+                placeholder="Enter answer"
                 style={{ ...inputStyle, textAlign: 'center', marginTop: '8px' }}
               />
             </div>
 
             {error && <p style={errorStyle}>{error}</p>}
-
-            <button onClick={handleVerifyOTP} disabled={loading} style={btnStyle('#7c3aed', '#fff')}>
-              {loading ? 'Verify ho raha hai...' : '✅ Verify & Login'}
+            <button onClick={handleSendOTP} disabled={loading} style={btnStyle('#7c3aed', '#fff')}>
+              {loading ? 'Sending...' : 'Send OTP'}
             </button>
-            <button onClick={() => { setStep('phone'); setOtp(''); }} style={backBtn}>← Wapas</button>
+            <button onClick={() => setStep('landing')} style={backBtn}>← Back</button>
+          </>
+        )}
+
+        {/* OTP */}
+        {step === 'otp' && (
+          <>
+            <h2 style={{ marginBottom: '8px' }}>🔐 Verify OTP</h2>
+            <p style={{ color: '#888', marginBottom: '20px', fontSize: '14px' }}>
+              Sent to +91 {phone}
+            </p>
+            <input
+              type="tel" maxLength={6} value={otp}
+              onChange={e => setOtp(e.target.value.replace(/\D/, ''))}
+              placeholder="Enter 6-digit OTP"
+              style={{ ...inputStyle, letterSpacing: '8px', fontSize: '20px', textAlign: 'center' }}
+            />
+            {error && <p style={errorStyle}>{error}</p>}
+            <button onClick={handleVerifyOTP} disabled={loading} style={btnStyle('#7c3aed', '#fff')}>
+              {loading ? 'Verifying...' : ' Verify & Login'}
+            </button>
+            <button onClick={() => { setStep('phone'); setOtp(''); }} style={backBtn}>← Back</button>
           </>
         )}
       </div>
@@ -184,7 +207,6 @@ export default function Login() {
   );
 }
 
-// Styles
 const btnStyle = (bg: string, color: string, border = 'none'): any => ({
   width: '100%', padding: '14px', borderRadius: '10px',
   background: bg, color, border, fontSize: '15px',
@@ -200,7 +222,7 @@ const prefixStyle: any = {
   padding: '12px', background: '#1a1a2e', borderRadius: '8px 0 0 8px',
   border: '1px solid #333', borderRight: 'none', color: '#aaa'
 };
-const errorStyle: any = { color: '#f87171', fontSize: '13px', marginBottom: '8px' };
+const errorStyle: any = { color: '#f87171', fontSize: '13px', marginBottom: '8px', marginTop: '8px' };
 const backBtn: any = {
   background: 'none', border: 'none', color: '#888',
   cursor: 'pointer', marginTop: '12px', fontSize: '14px'
