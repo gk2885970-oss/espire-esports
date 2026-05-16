@@ -32,31 +32,32 @@ export default function Login() {
       const result = await signInWithPopup(auth, googleProvider);
       localStorage.setItem('userId', result.user.uid);
       navigate('/home');
-    } catch (e: any) { setError('Google failed'); }
+    } catch (e: any) { setError('Google login block hai (Domain check karo)'); }
     setLoading(false);
   };
 
   const handleGuestLogin = async () => {
     setLoading(true);
     try {
-      const result = await signInAnonymously(auth);
+      const result = await signInAnonymously(auth); // Firebase mein Anonymous enable hona chahiye
       localStorage.setItem('userId', result.user.uid);
       navigate('/home');
-    } catch (e: any) { setError('Guest failed'); }
+    } catch (e: any) { setError('Guest Login settings mein off hai'); }
     setLoading(false);
   };
 
   const handleSendOTP = async () => {
-    if (phone.length !== 10) return setError('Enter 10 digits');
+    if (phone.length !== 10) return setError('10 digit number dalo');
     setLoading(true);
     try {
       setupInvisibleRecaptcha();
-      const confirmation = await signInWithPhoneNumber(auth, `+91${phone}`, (window as any).recaptchaVerifier);
+      const appVerifier = (window as any).recaptchaVerifier;
+      const confirmation = await signInWithPhoneNumber(auth, `+91${phone}`, appVerifier);
       setConfirm(confirmation);
       setStep('otp');
       setError('');
     } catch (e: any) { 
-      setError('SMS limit reached or domain not added');
+      setError('OTP nahi gaya. Domain add karo ya testing number use karo');
       if ((window as any).recaptchaVerifier) (window as any).recaptchaVerifier.clear();
     }
     setLoading(false);
@@ -65,69 +66,76 @@ export default function Login() {
   return (
     <div style={containerStyle}>
       <div id="recaptcha-container"></div>
-      <div style={cardStyle}>
-        <h1 style={logoStyle}>⚡ ESPIRE</h1>
-        <p style={subtitleStyle}>Ultimate Esports Platform</p>
+      <div style={mobileCardStyle}>
+        <div style={headerSection}>
+          <h1 style={logoStyle}>⚡ ESPIRE</h1>
+          <p style={tagline}>Play. Compete. Earn.</p>
+        </div>
 
         {step === 'input' ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            
-            {/* ROW 1: Google & Phone Number Input */}
-            <div style={{ display: 'flex', gap: '8px' }}>
-               <button onClick={handleGoogleLogin} style={smallGoogleBtn}>
-                 <img src="https://www.google.com/favicon.ico" width={20} />
+          <div style={formWrapper}>
+            <div style={rowStyle}>
+               <button onClick={handleGoogleLogin} style={googleIconBtn}>
+                 <img src="https://www.google.com/favicon.ico" width={22} />
                </button>
-               <div style={inputGroupStyle}>
-                 <span style={prefixStyle}>+91</span>
+               <div style={phoneInputGroup}>
+                 <span style={prefix}>+91</span>
                  <input 
                    type="tel" placeholder="Mobile Number" 
                    value={phone} onChange={e => setPhone(e.target.value.replace(/\D/, ''))}
-                   style={inputStyle} 
+                   style={inputField} 
                  />
                </div>
             </div>
 
-            {/* ROW 2: Primary Action Button */}
-            <button id="login-btn" onClick={handleSendOTP} disabled={loading} style={primaryBtnStyle}>
-              {loading ? 'Processing...' : 'Continue with Phone'}
+            <button id="login-btn" onClick={handleSendOTP} disabled={loading} style={mainActionBtn}>
+              {loading ? 'Sending OTP...' : 'Login with Phone'}
             </button>
 
-            {/* ROW 3: Guest Login (Visual Distinction) */}
-            <div style={{ margin: '8px 0', borderTop: '1px solid #222', paddingTop: '12px' }}>
-              <button onClick={handleGuestLogin} style={guestBtnStyle}>
-                Explore as Guest
-              </button>
-            </div>
+            <div style={divider}>OR</div>
+
+            <button onClick={handleGuestLogin} style={guestBtn}>
+              Continue as Guest
+            </button>
           </div>
         ) : (
-          <div style={{ textAlign: 'center' }}>
+          <div style={otpWrapper}>
             <input 
-              type="tel" placeholder="6-digit OTP" value={otp} 
-              onChange={e => setOtp(e.target.value)} style={otpInputStyle} 
+              type="tel" placeholder="Enter 6-digit OTP" 
+              value={otp} onChange={e => setOtp(e.target.value)} 
+              style={otpInput} 
             />
-            <button onClick={() => confirm.confirm(otp).then(() => navigate('/home'))} style={primaryBtnStyle}>
-              Verify & Login
+            <button onClick={() => confirm.confirm(otp).then(() => navigate('/home'))} style={mainActionBtn}>
+              Verify OTP
             </button>
-            <button onClick={() => setStep('input')} style={{background:'none', border:'none', color:'#666', marginTop:'10px', cursor:'pointer'}}>Edit Number</button>
+            <button onClick={() => setStep('input')} style={backLink}>Change Number</button>
           </div>
         )}
-        {error && <p style={{color:'#ff4444', fontSize:'12px', marginTop:'10px'}}>{error}</p>}
+        {error && <p style={errorText}>{error}</p>}
       </div>
     </div>
   );
 }
 
-// --- Premium Styles ---
-const containerStyle: any = { minHeight: '100vh', background: '#050505', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '15px' };
-const cardStyle: any = { background: '#0f0f12', padding: '24px', borderRadius: '16px', width: '100%', maxWidth: '360px', border: '1px solid #1f1f23', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' };
-const logoStyle: any = { fontSize: '24px', fontWeight: '900', color: '#fff', letterSpacing: '1px', marginBottom: '4px' };
-const subtitleStyle: any = { color: '#555', fontSize: '13px', marginBottom: '24px' };
+// --- Responsive Styles ---
+const containerStyle: any = { minHeight: '100vh', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px' };
+const mobileCardStyle: any = { background: '#0a0a0a', padding: '30px 20px', borderRadius: '24px', width: '100%', maxWidth: '350px', border: '1px solid #1a1a1a' };
+const headerSection: any = { textAlign: 'center', marginBottom: '35px' };
+const logoStyle: any = { fontSize: '28px', fontWeight: '900', color: '#fff', letterSpacing: '-1px' };
+const tagline: any = { color: '#555', fontSize: '12px' };
 
-const smallGoogleBtn: any = { background: '#fff', border: 'none', borderRadius: '12px', width: '55px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' };
-const inputGroupStyle: any = { flex: 1, display: 'flex', background: '#16161a', borderRadius: '12px', border: '1px solid #26262c', overflow: 'hidden' };
-const prefixStyle: any = { padding: '12px 8px', color: '#555', borderRight: '1px solid #26262c', fontSize: '14px' };
-const inputStyle: any = { flex: 1, background: 'transparent', border: 'none', padding: '12px', color: '#fff', outline: 'none', fontSize: '14px' };
+const formWrapper: any = { display: 'flex', flexDirection: 'column', gap: '15px' };
+const rowStyle: any = { display: 'flex', gap: '10px' };
+const googleIconBtn: any = { background: '#fff', border: 'none', borderRadius: '15px', width: '60px', height: '50px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' };
+const phoneInputGroup: any = { flex: 1, display: 'flex', background: '#141414', borderRadius: '15px', border: '1px solid #222', overflow: 'hidden' };
+const prefix: any = { padding: '15px 10px', color: '#666', fontSize: '14px', borderRight: '1px solid #222' };
+const inputField: any = { flex: 1, background: 'transparent', border: 'none', padding: '15px', color: '#fff', outline: 'none', fontSize: '15px' };
 
-const primaryBtnStyle: any = { width: '100%', padding: '14px', borderRadius: '12px', background: '#8b5cf6', color: '#fff', fontWeight: 'bold', border: 'none', cursor: 'pointer', transition: '0.2s' };
-const guestBtnStyle: any = { width: '100%', padding: '12px', borderRadius: '12px', background: '#1a1a1f', color: '#888', border: '1px solid #26262c', cursor: 'pointer', fontSize: '14px' };
-const otpInputStyle: any = { width: '100%', background: '#16161a', border: '1px solid #26262c', padding: '14px', borderRadius: '12px', color: '#fff', textAlign: 'center', letterSpacing: '4px', marginBottom: '12px', outline: 'none' };
+const mainActionBtn: any = { width: '100%', padding: '16px', borderRadius: '15px', background: '#7c3aed', color: '#fff', fontWeight: '800', border: 'none', fontSize: '15px', cursor: 'pointer' };
+const divider: any = { textAlign: 'center', color: '#333', fontSize: '11px', margin: '5px 0' };
+const guestBtn: any = { width: '100%', padding: '14px', borderRadius: '15px', background: 'transparent', color: '#888', border: '1px solid #222', fontSize: '14px', cursor: 'pointer' };
+
+const otpWrapper: any = { textAlign: 'center' };
+const otpInput: any = { width: '100%', background: '#141414', border: '1px solid #222', padding: '16px', borderRadius: '15px', color: '#fff', textAlign: 'center', letterSpacing: '8px', marginBottom: '15px', fontSize: '20px' };
+const backLink: any = { background: 'none', border: 'none', color: '#555', marginTop: '15px', cursor: 'pointer', fontSize: '13px' };
+const errorText: any = { color: '#ff4b4b', fontSize: '12px', marginTop: '15px', textAlign: 'center' };
