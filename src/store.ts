@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { UserProfile, Tournament, ChatMessage, AppState } from './types';
-import { calculateAIRating, getAIRank } from './utils/ratingEngine';
+// Note: Tumhe ratingEngine frontend par nahi chahiye kyunki ab AI backend decide karta hai rating.
 import { api } from './api';
 
 interface Store extends AppState {
@@ -13,6 +13,10 @@ interface Store extends AppState {
   joinTournament: (tournamentId: string) => Promise<void>;
   updateTrainingStats: (stats: Partial<AppState['trainingStats']>) => void;
   trackMatch: (matchData: { kills: number; placement: number; damage: number; game: string }) => Promise<void>;
+  
+  // --- NEW AI-NATIVE STATE ---
+  globalAiInsight: { message: string; data: any[] };
+  fetchDashboardInsight: () => Promise<void>;
 }
 
 const initialUser: UserProfile = {
@@ -36,7 +40,7 @@ const initialUser: UserProfile = {
     booyahs: 3,
     top3: 8,
     avgPoints: 17.1,
-    aiRating: 84,
+    aiRating: 84,        // Yeh ab backend AI control karega
     aiRank: 'Elite Pro',
   },
   wallet: {
@@ -58,7 +62,12 @@ export const useStore = create<Store>()(
         targetsHit: 0,
         lastDrill: 'None',
       },
+      
+      // Global AI Memory
+      globalAiInsight: { message: "Initializing Espire Neural Net...", data: [] },
+
       setUser: (user) => set({ user }),
+      
       fetchUser: async (userId) => {
         try {
           const data = await api.getUserProfile(userId);
@@ -69,28 +78,28 @@ export const useStore = create<Store>()(
               displayName: data.display_name,
               photoURL: data.photo_url,
               role: data.role as any,
-              gamingIds: data.gamingIds.reduce((acc: any, curr: any) => {
-                acc[curr.game_name.toLowerCase()] = curr.player_id;
+              gamingIds: Object.keys(data.gamingIds || {}).reduce((acc: any, curr: any) => {
+                if(data.gamingIds[curr]) acc[data.gamingIds[curr].game_name?.toLowerCase()] = data.gamingIds[curr].player_id;
                 return acc;
               }, {}),
               stats: {
-                level: data.level,
-                xp: data.xp,
-                rank: data.rank,
-                tournamentsPlayed: data.tournaments_played,
-                tournamentsWon: data.tournaments_won,
-                placementPoints: data.placement_points,
-                totalKills: data.total_kills,
-                totalPoints: data.total_points,
-                booyahs: data.booyahs,
-                top3: data.top3,
-                avgPoints: data.avg_points,
-                aiRating: data.ai_rating,
-                aiRank: data.ai_rank,
+                level: data.level || 1,
+                xp: data.xp || 0,
+                rank: data.rank || 0,
+                tournamentsPlayed: data.tournaments_played || 0,
+                tournamentsWon: data.tournaments_won || 0,
+                placementPoints: data.placement_points || 0,
+                totalKills: data.total_kills || 0,
+                totalPoints: data.total_points || 0,
+                booyahs: data.booyahs || 0,
+                top3: data.top3 || 0,
+                avgPoints: data.avg_points || 0,
+                aiRating: data.ai_rating || 50,
+                aiRank: data.ai_rank || 'Beginner',
               },
               wallet: {
-                balance: data.balance,
-                currency: data.currency,
+                balance: data.balance || 0,
+                currency: data.currency || 'INR',
               },
             };
             set({ user: userProfile });
@@ -99,15 +108,16 @@ export const useStore = create<Store>()(
           console.error('Failed to fetch user:', error);
         }
       },
+
       updateGamingId: async (game, id) => {
         const { user } = get();
         await api.updateGamingId(user.uid, { game_name: game.toUpperCase(), player_id: id, rank: 'Unranked' });
         await get().fetchUser(user.uid);
       },
+
       addChatMessage: (message) =>
-        set((state) => ({
-          chatHistory: [...state.chatHistory, message],
-        })),
+        set((state) => ({ chatHistory: [...state.chatHistory, message] })),
+
       fetchTournaments: async () => {
         try {
           const data = await api.getTournaments();
@@ -120,7 +130,7 @@ export const useStore = create<Store>()(
               prizePool: t.prize_pool,
               startDate: t.date,
               status: t.status,
-              teamsRegistered: t.players_joined,
+              teamsRegistered: t.players_joined || 0,
               maxTeams: t.max_players,
               bannerUrl: t.banner_url,
             }));
@@ -130,6 +140,7 @@ export const useStore = create<Store>()(
           console.error('Failed to fetch tournaments:', error);
         }
       },
+
       joinTournament: async (tournamentId) => {
         const { user } = get();
         const res = await api.joinTournament(tournamentId, user.uid);
@@ -140,18 +151,44 @@ export const useStore = create<Store>()(
           throw new Error(res.error);
         }
       },
+
       updateTrainingStats: (stats) =>
-        set((state) => ({
-          trainingStats: { ...state.trainingStats, ...stats },
-        })),
+        set((state) => ({ trainingStats: { ...state.trainingStats, ...stats } })),
+
+      // YC SaaS Challenger Workflow: Agentic State Updates
       trackMatch: async (matchData) => {
         const { user } = get();
-        await api.trackMatch({ ...matchData, userId: user.uid });
+        // Send to backend. Backend AI will automatically calculate the new rating.
+        const response = await api.trackMatch({ ...matchData, userId: user.uid });
+        
+        // Immediately refresh user to get the new AI Rating and Rank assigned by the backend Agent
         await get().fetchUser(user.uid);
+        
+        // Background update the Dashboard AI insight so the user gets immediate coaching feedback
+        await get().fetchDashboardInsight();
       },
+
+      // The new brain connection
+      fetchDashboardInsight: async () => {
+        const { user } = get();
+        try {
+          // Direct call to our new Text-to-SQL AI Route
+          const result = await api.getAiInsight(user.uid, "Analyze my recent performance and give me a trend graph.");
+          if (result && result.advice) {
+            set({ 
+              globalAiInsight: { 
+                message: result.advice, 
+                data: result.graphData || [] 
+              } 
+            });
+          }
+        } catch (err) {
+          console.error("AI Brain connection lost:", err);
+        }
+      }
     }),
     {
-      name: 'espire-storage',
+      name: 'espire-ai-storage', // Updated name to clear old un-optimized cache
     }
   )
 );
