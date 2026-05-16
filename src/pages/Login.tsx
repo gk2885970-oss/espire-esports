@@ -32,12 +32,12 @@ export default function Login() {
     }
   }, []);
 
-  // 1. Google Login Fix
+  // 1. Google Login
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
       const result = await signInWithPopup(auth, googleProvider);
-      localStorage.setItem('token', result.user.uid); // 'token' for App.tsx
+      localStorage.setItem('token', result.user.uid);
       navigate('/home');
     } catch (e: any) { 
       setError('Google Login failed'); 
@@ -45,12 +45,12 @@ export default function Login() {
     setLoading(false);
   };
 
-  // 2. Guest Login Fix
+  // 2. Guest Login
   const handleGuestLogin = async () => {
     setLoading(true);
     try {
       const result = await signInAnonymously(auth);
-      localStorage.setItem('token', result.user.uid); // 'token' for App.tsx
+      localStorage.setItem('token', result.user.uid);
       navigate('/home');
     } catch (e: any) { 
       setError('Guest Login failed'); 
@@ -58,7 +58,7 @@ export default function Login() {
     setLoading(false);
   };
 
-  // 3. Phone OTP Send Fix
+  // 3. Phone OTP Send
   const handleSendOTP = async () => {
     if (phone.length !== 10) return setError('10 digit number dalo');
     setLoading(true);
@@ -75,12 +75,12 @@ export default function Login() {
     setLoading(false);
   };
 
-  // 4. OTP Verify Fix
+  // 4. OTP Verify
   const handleVerifyOTP = async () => {
     setLoading(true);
     try {
       const result = await confirm.confirm(otp);
-      localStorage.setItem('token', result.user.uid); // 'token' for App.tsx
+      localStorage.setItem('token', result.user.uid);
       navigate('/home');
     } catch (e: any) {
       setError('Invalid OTP. Try again.');
@@ -90,12 +90,22 @@ export default function Login() {
 
   return (
     <div style={containerStyle}>
-      {/* Recaptcha container outside conditional rendering to prevent crash */}
       <div id="recaptcha-container"></div>
       
       <div style={mobileCardStyle}>
+        {/* --- BRANDING SECTION --- */}
         <div style={headerSection}>
-          <h1 style={logoStyle}>⚡ ESPIRE</h1>
+          <img 
+            src="/logo.png" 
+            alt="ESPIRE Logo" 
+            style={{ 
+              width: '180px', 
+              height: 'auto', 
+              margin: '0 auto 10px', 
+              display: 'block',
+              filter: 'drop-shadow(0 0 10px rgba(139, 92, 246, 0.4))' 
+            }} 
+          />
           <p style={tagline}>Ultimate Esports Experience</p>
         </div>
 
@@ -149,7 +159,6 @@ export default function Login() {
 const containerStyle: any = { minHeight: '100vh', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px', fontFamily: 'sans-serif' };
 const mobileCardStyle: any = { background: '#0a0a0a', padding: '30px 20px', borderRadius: '24px', width: '100%', maxWidth: '350px', border: '1px solid #1a1a1a', textAlign: 'center' };
 const headerSection: any = { marginBottom: '35px' };
-const logoStyle: any = { fontSize: '28px', fontWeight: '900', color: '#fff', margin: 0 };
 const tagline: any = { color: '#555', fontSize: '12px', marginTop: '5px' };
 const formWrapper: any = { display: 'flex', flexDirection: 'column', gap: '15px' };
 const rowStyle: any = { display: 'flex', gap: '10px' };
