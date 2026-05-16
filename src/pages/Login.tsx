@@ -37,6 +37,7 @@ export default function Login() {
       navigate('/home');
     } catch (e: any) {
       setError('Google sign in failed. Please try again.');
+      console.error(e);
     }
     setLoading(false);
   };
@@ -51,11 +52,12 @@ export default function Login() {
       navigate('/home');
     } catch (e: any) {
       setError('Guest login failed. Please try again.');
+      console.error(e);
     }
     setLoading(false);
   };
 
-  // Send OTP
+  // Send OTP (Naya AI-Native Fixed Code)
   const handleSendOTP = async () => {
     if (phone.length !== 10) return setError('Please enter a valid 10-digit number');
     if (parseInt(captchaInput) !== captchaNum.a + captchaNum.b)
@@ -63,25 +65,37 @@ export default function Login() {
 
     setLoading(true);
     try {
-      if (!recaptchaRef.current) {
-        recaptchaRef.current = new RecaptchaVerifier(auth, 'recaptcha-container', {
+      // FIX: Use window object to prevent React re-render conflicts
+      if (!(window as any).recaptchaVerifier) {
+        (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
           size: 'invisible',
         });
       }
+
       const confirmation = await signInWithPhoneNumber(
-        auth, `+91${phone}`, recaptchaRef.current
+        auth, 
+        `+91${phone}`, 
+        (window as any).recaptchaVerifier
       );
+      
       setConfirm(confirmation);
       setStep('otp');
       setError('');
     } catch (e: any) {
-      setError('Failed to send OTP. Check your number and try again.');
-      console.error(e);
+      // FIX: Show the ACTUAL Firebase error so we know what is wrong
+      setError(`Error: ${e.message}`);
+      console.error("FIREBASE OTP ERROR:", e);
+
+      // Reset recaptcha if it crashes so user can try again safely
+      if ((window as any).recaptchaVerifier) {
+        (window as any).recaptchaVerifier.clear();
+        (window as any).recaptchaVerifier = null;
+      }
     }
     setLoading(false);
   };
 
-  // Verify OTP
+  // Verify OTP (Naya Fixed Code)
   const handleVerifyOTP = async () => {
     if (otp.length !== 6) return setError('Please enter the 6-digit OTP');
     setLoading(true);
@@ -91,7 +105,8 @@ export default function Login() {
       localStorage.setItem('userId', result.user.uid);
       navigate('/home');
     } catch (e: any) {
-      setError('Incorrect OTP. Please try again.');
+      setError(e.message || 'Incorrect OTP. Please try again.');
+      console.error(e);
     }
     setLoading(false);
   };
