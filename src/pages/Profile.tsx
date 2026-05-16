@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion'; // Motion standard use kar rahe hain
 import { 
   User, 
   Settings, 
@@ -20,6 +20,7 @@ import {
 import { useStore } from '../store';
 import { getRatingSuggestion } from '../utils/ratingEngine';
 import { useNavigate } from 'react-router-dom';
+import { auth } from '../firebase'; // Firebase auth import karna zaroori hai
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -35,6 +36,23 @@ const Profile = () => {
     { label: 'Win Rate', value: `${Math.round((user.stats.tournamentsWon / (user.stats.tournamentsPlayed || 1)) * 100)}%`, path: '/profile/stats' },
     { label: 'Earnings', value: `₹${user.wallet.balance * 2}`, path: '/wallet' },
   ];
+
+  // --- LOGOUT LOGIC ---
+  const handleLogout = async () => {
+    try {
+      // 1. Firebase session khatam karo
+      await auth.signOut();
+      
+      // 2. LocalStorage saaf karo (App.tsx isi 'token' ko check karta hai)
+      localStorage.removeItem('token');
+      localStorage.removeItem('userId');
+      
+      // 3. User ko Login page par dhaka de do
+      navigate('/login');
+    } catch (error) {
+      console.error("Logout Error:", error);
+    }
+  };
 
   const handleEdit = (game: 'bgmi' | 'freefire' | 'valorant') => {
     setEditingGame(game);
@@ -111,7 +129,6 @@ const Profile = () => {
             </div>
           </div>
           
-          {/* Progress Bar */}
           <div className="w-full h-3 bg-muted rounded-full mb-4 overflow-hidden border border-white/5">
             <motion.div 
               initial={{ width: 0 }}
@@ -209,37 +226,28 @@ const Profile = () => {
 
       {/* Menu Options */}
       <div className="space-y-2">
-        <button 
-          onClick={() => navigate('/privacy')}
-          className="w-full flex items-center justify-between p-4 glass-card rounded-2xl border-white/5 hover:bg-muted/30 transition-colors"
-        >
+        {/* Baaki buttons wahi rehnge... */}
+        <button onClick={() => navigate('/privacy')} className="w-full flex items-center justify-between p-4 glass-card rounded-2xl border-white/5 hover:bg-muted/30 transition-colors">
           <div className="flex items-center gap-3">
             <Shield size={18} className="text-muted-foreground" />
             <span className="text-sm font-medium">Privacy & Security</span>
           </div>
           <ChevronRight size={16} className="text-muted-foreground" />
         </button>
-        <button 
-          onClick={() => navigate('/premium')}
-          className="w-full flex items-center justify-between p-4 glass-card rounded-2xl border-white/5 hover:bg-muted/30 transition-colors"
-        >
+        
+        <button onClick={() => navigate('/premium')} className="w-full flex items-center justify-between p-4 glass-card rounded-2xl border-white/5 hover:bg-muted/30 transition-colors">
           <div className="flex items-center gap-3">
             <Star size={18} className="text-muted-foreground" />
             <span className="text-sm font-medium">Premium Subscription</span>
           </div>
           <ChevronRight size={16} className="text-muted-foreground" />
         </button>
+
+        {/* LOGOUT BUTTON FIXED HERE */}
         <button 
-          onClick={() => navigate('/achievements')}
-          className="w-full flex items-center justify-between p-4 glass-card rounded-2xl border-white/5 hover:bg-muted/30 transition-colors"
+          onClick={handleLogout} 
+          className="w-full flex items-center justify-between p-4 glass-card rounded-2xl border-white/5 text-red-500 hover:bg-red-500/10 transition-colors"
         >
-          <div className="flex items-center gap-3">
-            <Trophy size={18} className="text-muted-foreground" />
-            <span className="text-sm font-medium">Achievements</span>
-          </div>
-          <ChevronRight size={16} className="text-muted-foreground" />
-        </button>
-        <button className="w-full flex items-center justify-between p-4 glass-card rounded-2xl border-white/5 text-red-500 hover:bg-red-500/10 transition-colors">
           <div className="flex items-center gap-3">
             <LogOut size={18} />
             <span className="text-sm font-medium">Logout</span>
