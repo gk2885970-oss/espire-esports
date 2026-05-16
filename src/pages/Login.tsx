@@ -18,56 +18,83 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // 1. Fixed Recaptcha initialization
+  // 1. Improved Recaptcha Loader
   useEffect(() => {
     if (!(window as any).recaptchaVerifier) {
-      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        'size': 'invisible',
-        'callback': () => { console.log('Verified'); }
-      });
+      try {
+        (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          'size': 'invisible',
+          'callback': () => { console.log('Recaptcha ready'); }
+        });
+      } catch (err) {
+        console.error("Recaptcha Init Error:", err);
+      }
     }
+    return () => {
+      if ((window as any).recaptchaVerifier) {
+        (window as any).recaptchaVerifier.clear();
+        (window as any).recaptchaVerifier = null;
+      }
+    };
   }, []);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
+    setError('');
     try {
       const result = await signInWithPopup(auth, googleProvider);
       localStorage.setItem('userId', result.user.uid);
       navigate('/home');
-    } catch (e: any) { setError('Google login block hai'); }
+    } catch (e: any) { 
+      setError(`Google Error: ${e.code}`); 
+    }
     setLoading(false);
   };
 
   const handleGuestLogin = async () => {
     setLoading(true);
+    setError('');
     try {
       const result = await signInAnonymously(auth);
       localStorage.setItem('userId', result.user.uid);
       navigate('/home');
-    } catch (e: any) { setError('Guest failed: Check Anonymous Setting'); }
+    } catch (e: any) { 
+      setError(`Guest Error: ${e.code}. Check if Anonymous is Enabled in Firebase.`); 
+    }
     setLoading(false);
   };
 
   const handleSendOTP = async () => {
     if (phone.length !== 10) return setError('10 digit number dalo');
     setLoading(true);
+    setError('');
     try {
       const appVerifier = (window as any).recaptchaVerifier;
       const confirmation = await signInWithPhoneNumber(auth, `+91${phone}`, appVerifier);
       setConfirm(confirmation);
       setStep('otp');
-      setError('');
     } catch (e: any) { 
-      setError('OTP Error: Domain link check karo');
+      setError(`OTP Error: ${e.code}. Domain link check karo.`);
       console.error(e);
-      if ((window as any).recaptchaVerifier) (window as any).recaptchaVerifier.clear();
+    }
+    setLoading(false);
+  };
+
+  const handleVerifyOTP = async () => {
+    setLoading(true);
+    try {
+      const result = await confirm.confirm(otp);
+      localStorage.setItem('userId', result.user.uid);
+      navigate('/home');
+    } catch (e: any) {
+      setError('Wrong OTP. Try again.');
     }
     setLoading(false);
   };
 
   return (
     <div style={containerStyle}>
-      {/* 2. Recaptcha container MUST be present in DOM */}
+      {/* Container for Recaptcha */}
       <div id="recaptcha-container"></div>
       
       <div style={mobileCardStyle}>
@@ -93,13 +120,13 @@ export default function Login() {
             </div>
 
             <button onClick={handleSendOTP} disabled={loading} style={mainActionBtn}>
-              {loading ? 'Sending OTP...' : 'Continue with Phone'}
+              {loading ? 'Processing...' : 'Continue with Phone'}
             </button>
 
             <div style={divider}>OR</div>
 
             <button onClick={handleGuestLogin} style={guestBtn}>
-              Continue as Guest
+              Explore as Guest
             </button>
           </div>
         ) : (
@@ -109,34 +136,36 @@ export default function Login() {
               value={otp} onChange={e => setOtp(e.target.value)} 
               style={otpInput} 
             />
-            <button onClick={() => confirm.confirm(otp).then(() => navigate('/home'))} style={mainActionBtn}>
-              Verify OTP
+            <button onClick={handleVerifyOTP} disabled={loading} style={mainActionBtn}>
+              Verify & Login
             </button>
             <button onClick={() => setStep('input')} style={backLink}>Change Number</button>
           </div>
         )}
-        {error && <p style={errorText}>{error}</p>}
+        
+        {/* Yahan error detail mein dikhega */}
+        {error && <div style={errorCard}>{error}</div>}
       </div>
     </div>
   );
 }
 
 // --- Styles ---
-const containerStyle: any = { minHeight: '100vh', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px' };
-const mobileCardStyle: any = { background: '#0a0a0a', padding: '30px 20px', borderRadius: '24px', width: '100%', maxWidth: '350px', border: '1px solid #1a1a1a' };
-const headerSection: any = { textAlign: 'center', marginBottom: '35px' };
-const logoStyle: any = { fontSize: '28px', fontWeight: '900', color: '#fff' };
-const tagline: any = { color: '#555', fontSize: '12px' };
+const containerStyle: any = { minHeight: '100vh', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px', fontFamily: 'sans-serif' };
+const mobileCardStyle: any = { background: '#0a0a0a', padding: '30px 20px', borderRadius: '24px', width: '100%', maxWidth: '350px', border: '1px solid #1a1a1a', textAlign: 'center' };
+const headerSection: any = { marginBottom: '35px' };
+const logoStyle: any = { fontSize: '28px', fontWeight: '900', color: '#fff', margin: 0 };
+const tagline: any = { color: '#555', fontSize: '12px', marginTop: '5px' };
 const formWrapper: any = { display: 'flex', flexDirection: 'column', gap: '15px' };
 const rowStyle: any = { display: 'flex', gap: '10px' };
 const googleIconBtn: any = { background: '#fff', border: 'none', borderRadius: '15px', width: '60px', height: '50px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' };
 const phoneInputGroup: any = { flex: 1, display: 'flex', background: '#141414', borderRadius: '15px', border: '1px solid #222', overflow: 'hidden' };
-const prefix: any = { padding: '15px 10px', color: '#666', borderRight: '1px solid #222' };
-const inputField: any = { flex: 1, background: 'transparent', border: 'none', padding: '15px', color: '#fff', outline: 'none' };
-const mainActionBtn: any = { width: '100%', padding: '16px', borderRadius: '15px', background: '#7c3aed', color: '#fff', fontWeight: '800', border: 'none', cursor: 'pointer' };
-const divider: any = { textAlign: 'center', color: '#333', fontSize: '11px', margin: '5px 0' };
-const guestBtn: any = { width: '100%', padding: '14px', borderRadius: '15px', background: 'transparent', color: '#888', border: '1px solid #222', cursor: 'pointer' };
+const prefix: any = { padding: '15px 10px', color: '#666', borderRight: '1px solid #222', fontSize: '14px' };
+const inputField: any = { flex: 1, background: 'transparent', border: 'none', padding: '15px', color: '#fff', outline: 'none', fontSize: '14px' };
+const mainActionBtn: any = { width: '100%', padding: '16px', borderRadius: '15px', background: '#7c3aed', color: '#fff', fontWeight: '800', border: 'none', cursor: 'pointer', fontSize: '15px' };
+const divider: any = { color: '#333', fontSize: '11px', margin: '5px 0' };
+const guestBtn: any = { width: '100%', padding: '14px', borderRadius: '15px', background: 'transparent', color: '#888', border: '1px solid #222', cursor: 'pointer', fontSize: '14px' };
 const otpWrapper: any = { textAlign: 'center' };
-const otpInput: any = { width: '100%', background: '#141414', border: '1px solid #222', padding: '16px', borderRadius: '15px', color: '#fff', textAlign: 'center', letterSpacing: '8px', marginBottom: '15px', fontSize: '20px' };
-const backLink: any = { background: 'none', border: 'none', color: '#555', marginTop: '15px', cursor: 'pointer' };
-const errorText: any = { color: '#ff4b4b', fontSize: '12px', marginTop: '15px', textAlign: 'center' };
+const otpInput: any = { width: '100%', background: '#141414', border: '1px solid #222', padding: '16px', borderRadius: '15px', color: '#fff', textAlign: 'center', letterSpacing: '8px', marginBottom: '15px', fontSize: '20px', outline: 'none' };
+const backLink: any = { background: 'none', border: 'none', color: '#555', marginTop: '15px', cursor: 'pointer', fontSize: '13px' };
+const errorCard: any = { color: '#ff4b4b', fontSize: '11px', marginTop: '15px', padding: '10px', background: 'rgba(255,0,0,0.1)', borderRadius: '10px', border: '1px solid rgba(255,0,0,0.2)' };
