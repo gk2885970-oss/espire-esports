@@ -1,11 +1,16 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { 
+  getAuth, 
+  GoogleAuthProvider, 
+  signInWithPopup, 
+  signInAnonymously, 
+  RecaptchaVerifier, 
+  signInWithPhoneNumber 
+} from "firebase/auth";
 
 // Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyDI6Z53repPzBbasbbZEdaZnndKIuuEdT4",
   authDomain: "espire-esports.firebaseapp.com",
@@ -16,6 +21,20 @@ const firebaseConfig = {
   measurementId: "G-KN10XH1FN9"
 };
 
-// Initialize Firebase
+// Initialize Firebase App
 const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
+
+// Initialize Analytics
+export const analytics = getAnalytics(app);
+
+// Initialize Auth & Google Provider for Login.tsx
+export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
+
+// Export all needed auth functions so Login.tsx can use them
+export { 
+  signInWithPopup, 
+  signInAnonymously, 
+  RecaptchaVerifier, 
+  signInWithPhoneNumber 
+};
