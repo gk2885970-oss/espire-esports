@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   auth,
   googleProvider,
   signInWithPopup,
+  signInAnonymously,
   RecaptchaVerifier,
   signInWithPhoneNumber
 } from '../firebase';
@@ -17,12 +18,10 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Setup Invisible Recaptcha (No more math puzzles!)
   const setupInvisibleRecaptcha = () => {
     if (!(window as any).recaptchaVerifier) {
-      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'login-button', {
-        size: 'invisible',
-        callback: () => { console.log('Recaptcha verified'); }
+      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'login-btn', {
+        size: 'invisible'
       });
     }
   };
@@ -33,37 +32,32 @@ export default function Login() {
       const result = await signInWithPopup(auth, googleProvider);
       localStorage.setItem('userId', result.user.uid);
       navigate('/home');
-    } catch (e: any) {
-      setError('Google login failed. Try again.');
-    }
+    } catch (e: any) { setError('Google failed'); }
+    setLoading(false);
+  };
+
+  const handleGuestLogin = async () => {
+    setLoading(true);
+    try {
+      const result = await signInAnonymously(auth);
+      localStorage.setItem('userId', result.user.uid);
+      navigate('/home');
+    } catch (e: any) { setError('Guest failed'); }
     setLoading(false);
   };
 
   const handleSendOTP = async () => {
-    if (phone.length !== 10) return setError('Enter 10-digit number');
+    if (phone.length !== 10) return setError('Enter 10 digits');
     setLoading(true);
     try {
       setupInvisibleRecaptcha();
-      const appVerifier = (window as any).recaptchaVerifier;
-      const confirmation = await signInWithPhoneNumber(auth, `+91${phone}`, appVerifier);
+      const confirmation = await signInWithPhoneNumber(auth, `+91${phone}`, (window as any).recaptchaVerifier);
       setConfirm(confirmation);
       setStep('otp');
       setError('');
-    } catch (e: any) {
-      setError('SMS failed. Check authorized domains in Firebase.');
+    } catch (e: any) { 
+      setError('SMS limit reached or domain not added');
       if ((window as any).recaptchaVerifier) (window as any).recaptchaVerifier.clear();
-    }
-    setLoading(false);
-  };
-
-  const handleVerifyOTP = async () => {
-    setLoading(true);
-    try {
-      const result = await confirm.confirm(otp);
-      localStorage.setItem('userId', result.user.uid);
-      navigate('/home');
-    } catch (e: any) {
-      setError('Wrong OTP. Try again.');
     }
     setLoading(false);
   };
@@ -71,71 +65,69 @@ export default function Login() {
   return (
     <div style={containerStyle}>
       <div id="recaptcha-container"></div>
-      
       <div style={cardStyle}>
         <h1 style={logoStyle}>⚡ ESPIRE</h1>
-        <p style={subtitleStyle}>Sign in to start earning</p>
+        <p style={subtitleStyle}>Ultimate Esports Platform</p>
 
         {step === 'input' ? (
-          <>
-            {/* Google Option First - Fastest */}
-            <button onClick={handleGoogleLogin} disabled={loading} style={googleBtnStyle}>
-              <img src="https://www.google.com/favicon.ico" width={18} />
-              Continue with Google
-            </button>
-
-            <div style={dividerStyle}>OR</div>
-
-            {/* Phone Option */}
-            <div style={inputGroupStyle}>
-              <span style={prefixStyle}>+91</span>
-              <input
-                type="tel"
-                placeholder="Enter Mobile Number"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value.replace(/\D/, ''))}
-                style={inputStyle}
-              />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            
+            {/* ROW 1: Google & Phone Number Input */}
+            <div style={{ display: 'flex', gap: '8px' }}>
+               <button onClick={handleGoogleLogin} style={smallGoogleBtn}>
+                 <img src="https://www.google.com/favicon.ico" width={20} />
+               </button>
+               <div style={inputGroupStyle}>
+                 <span style={prefixStyle}>+91</span>
+                 <input 
+                   type="tel" placeholder="Mobile Number" 
+                   value={phone} onChange={e => setPhone(e.target.value.replace(/\D/, ''))}
+                   style={inputStyle} 
+                 />
+               </div>
             </div>
 
-            <button id="login-button" onClick={handleSendOTP} disabled={loading} style={primaryBtnStyle}>
-              {loading ? 'Sending...' : 'Continue with Phone'}
+            {/* ROW 2: Primary Action Button */}
+            <button id="login-btn" onClick={handleSendOTP} disabled={loading} style={primaryBtnStyle}>
+              {loading ? 'Processing...' : 'Continue with Phone'}
             </button>
-          </>
-        ) : (
-          <>
-            <h2 style={{fontSize: '18px', marginBottom: '10px'}}>Verify OTP</h2>
-            <p style={{color: '#888', fontSize: '14px', marginBottom: '20px'}}>Sent to +91 {phone}</p>
-            <input
-              type="tel"
-              placeholder="Enter 6-digit OTP"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              style={{...inputStyle, textAlign: 'center', letterSpacing: '4px'}}
-            />
-            <button onClick={handleVerifyOTP} disabled={loading} style={primaryBtnStyle}>
-              {loading ? 'Verifying...' : 'Login Now'}
-            </button>
-            <button onClick={() => setStep('input')} style={backLinkStyle}>Edit Number</button>
-          </>
-        )}
 
-        {error && <p style={errorStyle}>{error}</p>}
+            {/* ROW 3: Guest Login (Visual Distinction) */}
+            <div style={{ margin: '8px 0', borderTop: '1px solid #222', paddingTop: '12px' }}>
+              <button onClick={handleGuestLogin} style={guestBtnStyle}>
+                Explore as Guest
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center' }}>
+            <input 
+              type="tel" placeholder="6-digit OTP" value={otp} 
+              onChange={e => setOtp(e.target.value)} style={otpInputStyle} 
+            />
+            <button onClick={() => confirm.confirm(otp).then(() => navigate('/home'))} style={primaryBtnStyle}>
+              Verify & Login
+            </button>
+            <button onClick={() => setStep('input')} style={{background:'none', border:'none', color:'#666', marginTop:'10px', cursor:'pointer'}}>Edit Number</button>
+          </div>
+        )}
+        {error && <p style={{color:'#ff4444', fontSize:'12px', marginTop:'10px'}}>{error}</p>}
       </div>
     </div>
   );
 }
 
-// --- Minimalist Styles ---
-const containerStyle: any = { minHeight: '100vh', background: '#050505', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' };
-const cardStyle: any = { background: '#121212', padding: '30px', borderRadius: '20px', width: '100%', maxWidth: '380px', border: '1px solid #222', textAlign: 'center' };
-const logoStyle: any = { fontSize: '2rem', fontWeight: '900', color: '#8b5cf6', marginBottom: '5px' };
-const subtitleStyle: any = { color: '#666', fontSize: '14px', marginBottom: '30px' };
-const googleBtnStyle: any = { width: '100%', padding: '12px', borderRadius: '12px', background: '#fff', color: '#000', border: 'none', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', cursor: 'pointer', marginBottom: '10px' };
-const dividerStyle: any = { margin: '20px 0', color: '#333', fontSize: '12px', fontWeight: 'bold' };
-const inputGroupStyle: any = { display: 'flex', background: '#1a1a1a', borderRadius: '12px', border: '1px solid #333', marginBottom: '15px', overflow: 'hidden' };
-const prefixStyle: any = { padding: '12px', color: '#666', borderRight: '1px solid #333' };
-const inputStyle: any = { flex: 1, background: 'transparent', border: 'none', padding: '12px', color: '#fff', outline: 'none' };
-const primaryBtnStyle: any = { width: '100%', padding: '14px', borderRadius: '12px', background: '#8b5cf6', color: '#fff', fontWeight: 'bold', border: 'none', cursor: 'pointer' };
-const backLinkStyle: any = { background: 'none', border: 'none', color: '#666', marginTop: '15px', cursor: 'pointer', fontSize: '13px' };
-const errorStyle: any = { color: '#ef4444', fontSize: '13px', marginTop: '15px' };
+// --- Premium Styles ---
+const containerStyle: any = { minHeight: '100vh', background: '#050505', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '15px' };
+const cardStyle: any = { background: '#0f0f12', padding: '24px', borderRadius: '16px', width: '100%', maxWidth: '360px', border: '1px solid #1f1f23', boxShadow: '0 10px 30px rgba(0,0,0,0.5)' };
+const logoStyle: any = { fontSize: '24px', fontWeight: '900', color: '#fff', letterSpacing: '1px', marginBottom: '4px' };
+const subtitleStyle: any = { color: '#555', fontSize: '13px', marginBottom: '24px' };
+
+const smallGoogleBtn: any = { background: '#fff', border: 'none', borderRadius: '12px', width: '55px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' };
+const inputGroupStyle: any = { flex: 1, display: 'flex', background: '#16161a', borderRadius: '12px', border: '1px solid #26262c', overflow: 'hidden' };
+const prefixStyle: any = { padding: '12px 8px', color: '#555', borderRight: '1px solid #26262c', fontSize: '14px' };
+const inputStyle: any = { flex: 1, background: 'transparent', border: 'none', padding: '12px', color: '#fff', outline: 'none', fontSize: '14px' };
+
+const primaryBtnStyle: any = { width: '100%', padding: '14px', borderRadius: '12px', background: '#8b5cf6', color: '#fff', fontWeight: 'bold', border: 'none', cursor: 'pointer', transition: '0.2s' };
+const guestBtnStyle: any = { width: '100%', padding: '12px', borderRadius: '12px', background: '#1a1a1f', color: '#888', border: '1px solid #26262c', cursor: 'pointer', fontSize: '14px' };
+const otpInputStyle: any = { width: '100%', background: '#16161a', border: '1px solid #26262c', padding: '14px', borderRadius: '12px', color: '#fff', textAlign: 'center', letterSpacing: '4px', marginBottom: '12px', outline: 'none' };
