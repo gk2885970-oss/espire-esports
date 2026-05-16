@@ -32,22 +32,33 @@ export default function Login() {
     }
   }, []);
 
-  const handleGuestLogin = async () => {
-    alert("Guest Login Start!");
+  // 1. Google Login Fix
+  const handleGoogleLogin = async () => {
     setLoading(true);
     try {
-      const result = await signInAnonymously(auth);
-      localStorage.setItem('userId', result.user.uid);
-      alert("Guest Login Successful! Navigating...");
-      // AGAR YE NAHI CHAL RAHA, TOH APP.TSX CHECK KARO
-      navigate('/home'); 
+      const result = await signInWithPopup(auth, googleProvider);
+      localStorage.setItem('token', result.user.uid); // 'token' for App.tsx
+      navigate('/home');
     } catch (e: any) { 
-      setError(`Guest Error: ${e.code}`);
-      alert("Error: " + e.code);
+      setError('Google Login failed'); 
     }
     setLoading(false);
   };
 
+  // 2. Guest Login Fix
+  const handleGuestLogin = async () => {
+    setLoading(true);
+    try {
+      const result = await signInAnonymously(auth);
+      localStorage.setItem('token', result.user.uid); // 'token' for App.tsx
+      navigate('/home');
+    } catch (e: any) { 
+      setError('Guest Login failed'); 
+    }
+    setLoading(false);
+  };
+
+  // 3. Phone OTP Send Fix
   const handleSendOTP = async () => {
     if (phone.length !== 10) return setError('10 digit number dalo');
     setLoading(true);
@@ -57,31 +68,29 @@ export default function Login() {
       const confirmation = await signInWithPhoneNumber(auth, `+91${phone}`, appVerifier);
       setConfirm(confirmation);
       setStep('otp');
-      alert("OTP Sent!");
     } catch (e: any) { 
-      setError(`OTP Error: ${e.code}`);
-      console.error(e);
-      // Re-render recaptcha if it fails
+      setError('OTP Send Error. Check Domain settings.');
       if ((window as any).recaptchaVerifier) (window as any).recaptchaVerifier.clear();
     }
     setLoading(false);
   };
 
+  // 4. OTP Verify Fix
   const handleVerifyOTP = async () => {
     setLoading(true);
     try {
       const result = await confirm.confirm(otp);
-      localStorage.setItem('userId', result.user.uid);
+      localStorage.setItem('token', result.user.uid); // 'token' for App.tsx
       navigate('/home');
     } catch (e: any) {
-      setError('Wrong OTP. Try again.');
+      setError('Invalid OTP. Try again.');
     }
     setLoading(false);
   };
 
   return (
     <div style={containerStyle}>
-      {/* 1. Recaptcha container ab logic se bahar hai, ab ye remove nahi hoga */}
+      {/* Recaptcha container outside conditional rendering to prevent crash */}
       <div id="recaptcha-container"></div>
       
       <div style={mobileCardStyle}>
@@ -93,8 +102,8 @@ export default function Login() {
         {step === 'input' ? (
           <div style={formWrapper}>
             <div style={rowStyle}>
-               <button onClick={() => signInWithPopup(auth, googleProvider).then(() => navigate('/home'))} style={googleIconBtn}>
-                 <img src="https://www.google.com/favicon.ico" width={22} />
+               <button onClick={handleGoogleLogin} style={googleIconBtn}>
+                 <img src="https://www.google.com/favicon.ico" width={22} alt="G" />
                </button>
                <div style={phoneInputGroup}>
                  <span style={prefix}>+91</span>
@@ -129,14 +138,15 @@ export default function Login() {
             <button onClick={() => setStep('input')} style={backLink}>Change Number</button>
           </div>
         )}
+        
         {error && <div style={errorCard}>{error}</div>}
       </div>
     </div>
   );
 }
 
-// --- Styles Wahi Rehnge ---
-const containerStyle: any = { minHeight: '100vh', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px' };
+// --- Styles (Mobile Optimized) ---
+const containerStyle: any = { minHeight: '100vh', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px', fontFamily: 'sans-serif' };
 const mobileCardStyle: any = { background: '#0a0a0a', padding: '30px 20px', borderRadius: '24px', width: '100%', maxWidth: '350px', border: '1px solid #1a1a1a', textAlign: 'center' };
 const headerSection: any = { marginBottom: '35px' };
 const logoStyle: any = { fontSize: '28px', fontWeight: '900', color: '#fff', margin: 0 };
