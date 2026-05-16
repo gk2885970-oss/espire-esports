@@ -18,7 +18,6 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // 1. Improved Recaptcha Loader
   useEffect(() => {
     if (!(window as any).recaptchaVerifier) {
       try {
@@ -30,41 +29,29 @@ export default function Login() {
         console.error("Recaptcha Init Error:", err);
       }
     }
-    return () => {
-      if ((window as any).recaptchaVerifier) {
-        (window as any).recaptchaVerifier.clear();
-        (window as any).recaptchaVerifier = null;
-      }
-    };
   }, []);
 
-  const handleGoogleLogin = async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      localStorage.setItem('userId', result.user.uid);
-      navigate('/home');
-    } catch (e: any) { 
-      setError(`Google Error: ${e.code}`); 
-    }
-    setLoading(false);
-  };
-
+  // --- YE RAHA GUEST LOGIN UPDATE ---
   const handleGuestLogin = async () => {
+    alert("Guest Button Click Hua!"); // Debug Alert
     setLoading(true);
     setError('');
     try {
       const result = await signInAnonymously(auth);
       localStorage.setItem('userId', result.user.uid);
+      alert("Guest Login Successful!"); // Success Alert
       navigate('/home');
     } catch (e: any) { 
-      setError(`Guest Error: ${e.code}. Check if Anonymous is Enabled in Firebase.`); 
+      setError(`Guest Error: ${e.code}`); 
+      alert("Error: " + e.code); // Error Alert
+      console.error(e);
     }
     setLoading(false);
   };
 
+  // --- YE RAHA PHONE LOGIN UPDATE ---
   const handleSendOTP = async () => {
+    alert("Phone Button Click Hua!"); // Debug Alert
     if (phone.length !== 10) return setError('10 digit number dalo');
     setLoading(true);
     setError('');
@@ -73,9 +60,24 @@ export default function Login() {
       const confirmation = await signInWithPhoneNumber(auth, `+91${phone}`, appVerifier);
       setConfirm(confirmation);
       setStep('otp');
+      alert("OTP Sent Successfully!");
     } catch (e: any) { 
-      setError(`OTP Error: ${e.code}. Domain link check karo.`);
+      setError(`OTP Error: ${e.code}`);
+      alert("OTP Send Error: " + e.code);
       console.error(e);
+    }
+    setLoading(false);
+  };
+
+  const handleGoogleLogin = async () => {
+    alert("Google Button Click Hua!");
+    setLoading(true);
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      localStorage.setItem('userId', result.user.uid);
+      navigate('/home');
+    } catch (e: any) { 
+      setError(`Google Error: ${e.code}`); 
     }
     setLoading(false);
   };
@@ -94,9 +96,7 @@ export default function Login() {
 
   return (
     <div style={containerStyle}>
-      {/* Container for Recaptcha */}
       <div id="recaptcha-container"></div>
-      
       <div style={mobileCardStyle}>
         <div style={headerSection}>
           <h1 style={logoStyle}>⚡ ESPIRE</h1>
@@ -142,16 +142,14 @@ export default function Login() {
             <button onClick={() => setStep('input')} style={backLink}>Change Number</button>
           </div>
         )}
-        
-        {/* Yahan error detail mein dikhega */}
         {error && <div style={errorCard}>{error}</div>}
       </div>
     </div>
   );
 }
 
-// --- Styles ---
-const containerStyle: any = { minHeight: '100vh', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px', fontFamily: 'sans-serif' };
+// --- Styles Re-Applied ---
+const containerStyle: any = { minHeight: '100vh', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px' };
 const mobileCardStyle: any = { background: '#0a0a0a', padding: '30px 20px', borderRadius: '24px', width: '100%', maxWidth: '350px', border: '1px solid #1a1a1a', textAlign: 'center' };
 const headerSection: any = { marginBottom: '35px' };
 const logoStyle: any = { fontSize: '28px', fontWeight: '900', color: '#fff', margin: 0 };
