@@ -18,40 +18,37 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // reCAPTCHA initialization
   useEffect(() => {
     if (!(window as any).recaptchaVerifier) {
       try {
         (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
           'size': 'invisible',
-          'callback': () => { console.log('Recaptcha ready'); }
+          'callback': () => { console.log('reCAPTCHA ready'); }
         });
       } catch (err) {
-        console.error("Recaptcha Init Error:", err);
+        console.error("reCAPTCHA Init Error:", err);
       }
     }
   }, []);
 
-  // --- YE RAHA GUEST LOGIN UPDATE ---
   const handleGuestLogin = async () => {
-    alert("Guest Button Click Hua!"); // Debug Alert
+    alert("Guest Login Start!");
     setLoading(true);
-    setError('');
     try {
       const result = await signInAnonymously(auth);
       localStorage.setItem('userId', result.user.uid);
-      alert("Guest Login Successful!"); // Success Alert
-      navigate('/home');
+      alert("Guest Login Successful! Navigating...");
+      // AGAR YE NAHI CHAL RAHA, TOH APP.TSX CHECK KARO
+      navigate('/home'); 
     } catch (e: any) { 
-      setError(`Guest Error: ${e.code}`); 
-      alert("Error: " + e.code); // Error Alert
-      console.error(e);
+      setError(`Guest Error: ${e.code}`);
+      alert("Error: " + e.code);
     }
     setLoading(false);
   };
 
-  // --- YE RAHA PHONE LOGIN UPDATE ---
   const handleSendOTP = async () => {
-    alert("Phone Button Click Hua!"); // Debug Alert
     if (phone.length !== 10) return setError('10 digit number dalo');
     setLoading(true);
     setError('');
@@ -60,24 +57,12 @@ export default function Login() {
       const confirmation = await signInWithPhoneNumber(auth, `+91${phone}`, appVerifier);
       setConfirm(confirmation);
       setStep('otp');
-      alert("OTP Sent Successfully!");
+      alert("OTP Sent!");
     } catch (e: any) { 
       setError(`OTP Error: ${e.code}`);
-      alert("OTP Send Error: " + e.code);
       console.error(e);
-    }
-    setLoading(false);
-  };
-
-  const handleGoogleLogin = async () => {
-    alert("Google Button Click Hua!");
-    setLoading(true);
-    try {
-      const result = await signInWithPopup(auth, googleProvider);
-      localStorage.setItem('userId', result.user.uid);
-      navigate('/home');
-    } catch (e: any) { 
-      setError(`Google Error: ${e.code}`); 
+      // Re-render recaptcha if it fails
+      if ((window as any).recaptchaVerifier) (window as any).recaptchaVerifier.clear();
     }
     setLoading(false);
   };
@@ -96,7 +81,9 @@ export default function Login() {
 
   return (
     <div style={containerStyle}>
+      {/* 1. Recaptcha container ab logic se bahar hai, ab ye remove nahi hoga */}
       <div id="recaptcha-container"></div>
+      
       <div style={mobileCardStyle}>
         <div style={headerSection}>
           <h1 style={logoStyle}>⚡ ESPIRE</h1>
@@ -106,7 +93,7 @@ export default function Login() {
         {step === 'input' ? (
           <div style={formWrapper}>
             <div style={rowStyle}>
-               <button onClick={handleGoogleLogin} style={googleIconBtn}>
+               <button onClick={() => signInWithPopup(auth, googleProvider).then(() => navigate('/home'))} style={googleIconBtn}>
                  <img src="https://www.google.com/favicon.ico" width={22} />
                </button>
                <div style={phoneInputGroup}>
@@ -148,7 +135,7 @@ export default function Login() {
   );
 }
 
-// --- Styles Re-Applied ---
+// --- Styles Wahi Rehnge ---
 const containerStyle: any = { minHeight: '100vh', background: '#000', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px' };
 const mobileCardStyle: any = { background: '#0a0a0a', padding: '30px 20px', borderRadius: '24px', width: '100%', maxWidth: '350px', border: '1px solid #1a1a1a', textAlign: 'center' };
 const headerSection: any = { marginBottom: '35px' };
@@ -163,7 +150,7 @@ const inputField: any = { flex: 1, background: 'transparent', border: 'none', pa
 const mainActionBtn: any = { width: '100%', padding: '16px', borderRadius: '15px', background: '#7c3aed', color: '#fff', fontWeight: '800', border: 'none', cursor: 'pointer', fontSize: '15px' };
 const divider: any = { color: '#333', fontSize: '11px', margin: '5px 0' };
 const guestBtn: any = { width: '100%', padding: '14px', borderRadius: '15px', background: 'transparent', color: '#888', border: '1px solid #222', cursor: 'pointer', fontSize: '14px' };
-const otpWrapper: any = { textAlign: 'center' };
 const otpInput: any = { width: '100%', background: '#141414', border: '1px solid #222', padding: '16px', borderRadius: '15px', color: '#fff', textAlign: 'center', letterSpacing: '8px', marginBottom: '15px', fontSize: '20px', outline: 'none' };
+const otpWrapper: any = { textAlign: 'center' };
 const backLink: any = { background: 'none', border: 'none', color: '#555', marginTop: '15px', cursor: 'pointer', fontSize: '13px' };
 const errorCard: any = { color: '#ff4b4b', fontSize: '11px', marginTop: '15px', padding: '10px', background: 'rgba(255,0,0,0.1)', borderRadius: '10px', border: '1px solid rgba(255,0,0,0.2)' };
