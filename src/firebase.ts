@@ -1,4 +1,3 @@
-// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { 
@@ -10,7 +9,6 @@ import {
   signInWithPhoneNumber 
 } from "firebase/auth";
 
-// Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyDI6Z53repPzBbasbbZEdaZnndKIuuEdT4",
   authDomain: "espire-esports.firebaseapp.com",
@@ -27,11 +25,11 @@ const app = initializeApp(firebaseConfig);
 // Initialize Analytics
 export const analytics = getAnalytics(app);
 
-// Initialize Auth & Google Provider for Login.tsx
+// Initialize Auth & Google Provider
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
-// Export all needed auth functions so Login.tsx can use them
+// YAHAN HAI MAIN FIX: Exporting the functions for Login.tsx
 export { 
   signInWithPopup, 
   signInAnonymously, 
