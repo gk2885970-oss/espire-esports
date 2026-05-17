@@ -82,19 +82,21 @@ const BottomNav = () => {
 
 const Header = () => (
   <header className="flex-none w-full flex items-center justify-between px-6 py-4 bg-[#0a0a0a]/80 backdrop-blur-md z-40 border-b border-yellow-500/10">
-    <div className="flex items-center gap-3">
-      <div className="w-10 h-10 flex items-center justify-center p-1 bg-yellow-500 rounded-lg">
+    {/* Left Side: Just the Original Logo */}
+    <div className="flex items-center">
+      <div className="h-8 flex items-center justify-center">
         <img
           src="/logo.png"
           alt="Espire Logo"
-          className="w-full h-full object-contain brightness-0" // Logo ko black kar diya background yellow hai isliye
+          className="h-full w-auto object-contain" // Preserves original colors and proportions
           onError={(e) => {
             e.currentTarget.src = "https://picsum.photos/seed/espire-logo/100/100";
           }}
         />
       </div>
-      <h1 className="text-xl font-black tracking-tighter text-yellow-500 uppercase italic">ESPIRE</h1>
     </div>
+    
+    {/* Right Side: Notifications & Wallet */}
     <div className="flex items-center gap-4">
       <button className="relative p-2 text-gray-400 hover:text-yellow-500 transition-colors">
         <Bell size={20} />
@@ -129,7 +131,21 @@ export default function App() {
                 <Route path="/profile" element={isLoggedIn() ? <Profile /> : <Navigate to="/login" />} />
                 <Route path="/pointcalc" element={isLoggedIn() ? <PointCalc /> : <Navigate to="/login" />} />
                 <Route path="/wallet" element={isLoggedIn() ? <WalletPage /> : <Navigate to="/login" />} />
-                {/* ... baaki saari routes waisi hi hain ... */}
+                {/* Ensure all your other routes are here */}
+                <Route path="/profile/stats" element={isLoggedIn() ? <Performance /> : <Navigate to="/login" />} />
+                <Route path="/profile/tournaments" element={isLoggedIn() ? <TournamentList /> : <Navigate to="/login" />} />
+                <Route path="/profile/achievements" element={isLoggedIn() ? <Achievements /> : <Navigate to="/login" />} />
+                <Route path="/tournament/:id" element={isLoggedIn() ? <TournamentAutomation /> : <Navigate to="/login" />} />
+                <Route path="/leaderboard" element={isLoggedIn() ? <Leaderboard /> : <Navigate to="/login" />} />
+                <Route path="/live-session" element={isLoggedIn() ? <LiveSession /> : <Navigate to="/login" />} />
+                <Route path="/privacy" element={isLoggedIn() ? <Privacy /> : <Navigate to="/login" />} />
+                <Route path="/premium" element={isLoggedIn() ? <Premium /> : <Navigate to="/login" />} />
+                <Route path="/community" element={isLoggedIn() ? <Community /> : <Navigate to="/login" />} />
+                <Route path="/live-coaching" element={isLoggedIn() ? <LiveCoaching /> : <Navigate to="/login" />} />
+                <Route path="/training/:moduleId" element={isLoggedIn() ? <TrainingModuleContainer /> : <Navigate to="/login" />} />
+                <Route path="/training/drill/:id" element={isLoggedIn() ? <DrillDetail /> : <Navigate to="/login" />} />
+                <Route path="/training/aim" element={isLoggedIn() ? <AimTrainerGame /> : <Navigate to="/login" />} />
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </AnimatePresence>
           </main>
