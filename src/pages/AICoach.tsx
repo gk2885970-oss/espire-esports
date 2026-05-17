@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion'; // Using standard framer-motion import
 import { Cpu, Send, Mic, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useStore } from '../store';
@@ -60,34 +60,39 @@ const AICoach = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="flex flex-col h-[calc(100vh-180px)]"
+      className="flex flex-col h-[calc(100vh-180px)] overflow-hidden"
     >
-      {/* AI Header */}
-      <div className="flex items-center gap-4 p-4 glass-card rounded-2xl mb-4 border-primary/20">
-        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-[0_0_15px_rgba(139,92,246,0.5)]">
-          <Cpu className="text-white" size={24} />
+      {/* AI Header - FIXED FOR ANDROID */}
+      <div className="flex flex-row items-center justify-between gap-2 p-3 glass-card rounded-2xl mb-4 border-primary/20 w-full overflow-hidden">
+        
+        {/* Left Side: Icon & Title */}
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center shadow-[0_0_15px_rgba(139,92,246,0.5)] shrink-0">
+            <Cpu className="text-white" size={20} />
+          </div>
+          <div className="hidden sm:block">
+            <h2 className="font-bold text-base flex items-center gap-2">
+              AI Coach
+            </h2>
+            <p className="text-[10px] text-muted-foreground whitespace-nowrap">Real-time analysis</p>
+          </div>
         </div>
-        <div>
-          <h2 className="font-bold text-lg flex items-center gap-2">
-            AI Coach
-            <span className="text-[10px] bg-primary/20 text-primary px-2 py-0.5 rounded-full uppercase tracking-tighter">Pro Active</span>
-          </h2>
-          <p className="text-xs text-muted-foreground">Analyzing your gameplay in real-time</p>
-        </div>
-        <div className="flex gap-2 ml-auto">
+
+        {/* Right Side: Action Buttons (Wrapped & Resized for Mobile) */}
+        <div className="flex flex-wrap justify-end gap-1.5 shrink min-w-0">
           <button 
             onClick={() => navigate('/live-coaching')}
-            className="flex items-center gap-2 bg-primary/20 text-primary px-3 py-2 rounded-xl border border-primary/30 hover:bg-primary/30 transition-all font-bold text-xs"
+            className="flex items-center justify-center gap-1.5 bg-primary/20 text-primary px-2.5 py-1.5 rounded-xl border border-primary/30 hover:bg-primary/30 transition-all font-bold text-[10px] sm:text-xs shrink-0 whitespace-nowrap"
           >
-            <Zap size={16} />
-            Simulation
+            <Zap size={14} />
+            <span>Simulate</span>
           </button>
           <button 
             onClick={() => navigate('/live-session')}
-            className="flex items-center gap-2 bg-secondary/20 text-secondary px-3 py-2 rounded-xl border border-secondary/30 hover:bg-secondary/30 transition-all font-bold text-xs"
+            className="flex items-center justify-center gap-1.5 bg-secondary/20 text-secondary px-2.5 py-1.5 rounded-xl border border-secondary/30 hover:bg-secondary/30 transition-all font-bold text-[10px] sm:text-xs shrink-0 whitespace-nowrap"
           >
-            <Mic size={16} />
-            Live Voice
+            <Mic size={14} />
+            <span>Voice</span>
           </button>
         </div>
       </div>
@@ -95,14 +100,15 @@ const AICoach = () => {
       {/* Chat Area */}
       <div className="flex-1 overflow-y-auto space-y-4 p-2 no-scrollbar">
         {chatHistory.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-center p-8">
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-              <Cpu className="text-primary" size={32} />
+          <div className="flex flex-col items-center justify-center h-full text-center p-4">
+            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+              <Cpu className="text-primary" size={28} />
             </div>
             <h3 className="text-lg font-bold mb-2">Welcome to Espire AI</h3>
-            <p className="text-sm text-muted-foreground">Ask me about aim training, strategies, or your recent match performance.</p>
+            <p className="text-sm text-muted-foreground max-w-[250px]">Ask me about aim training, strategies, or your match performance.</p>
           </div>
         )}
+        
         {chatHistory.map((msg) => (
           <motion.div 
             key={msg.id}
@@ -110,7 +116,7 @@ const AICoach = () => {
             animate={{ opacity: 1, x: 0 }}
             className={`flex ${msg.role === 'model' ? 'justify-start' : 'justify-end'}`}
           >
-            <div className={`max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed ${
+            <div className={`max-w-[85%] p-3.5 rounded-2xl text-sm leading-relaxed ${
               msg.role === 'model' 
                 ? 'bg-muted/50 border border-white/5 rounded-tl-none' 
                 : 'bg-primary text-white rounded-tr-none shadow-lg shadow-primary/20'
@@ -119,6 +125,7 @@ const AICoach = () => {
             </div>
           </motion.div>
         ))}
+        
         {isTyping && (
           <div className="flex justify-start">
             <div className="bg-muted/50 p-4 rounded-2xl rounded-tl-none flex gap-1">
@@ -132,12 +139,12 @@ const AICoach = () => {
       </div>
 
       {/* Quick Suggestions */}
-      <div className="flex gap-2 overflow-x-auto py-4 no-scrollbar">
+      <div className="flex gap-2 overflow-x-auto py-3 no-scrollbar shrink-0">
         {['Analyze my aim', 'Training routine', 'Strategy for Valorant', 'How to improve KD?'].map(s => (
           <button 
             key={s}
             onClick={() => setInput(s)}
-            className="whitespace-nowrap bg-muted/30 border border-white/5 px-4 py-2 rounded-full text-xs text-muted-foreground hover:text-white hover:border-primary/50 transition-all"
+            className="whitespace-nowrap shrink-0 bg-muted/30 border border-white/5 px-3 py-1.5 rounded-full text-[11px] text-muted-foreground hover:text-white hover:border-primary/50 transition-all"
           >
             {s}
           </button>
@@ -145,21 +152,21 @@ const AICoach = () => {
       </div>
 
       {/* Input Area */}
-      <div className="relative mt-auto">
+      <div className="relative mt-auto shrink-0 pb-2">
         <input 
           type="text" 
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyPress={(e) => e.key === 'Enter' && handleSend()}
           placeholder="Ask your coach anything..."
-          className="w-full bg-muted/50 border border-white/10 rounded-2xl py-4 pl-6 pr-14 text-sm focus:outline-none focus:border-primary/50 transition-colors"
+          className="w-full bg-muted/50 border border-white/10 rounded-2xl py-3.5 pl-4 pr-12 text-sm focus:outline-none focus:border-primary/50 transition-colors"
         />
         <button 
           onClick={handleSend}
           disabled={isTyping}
-          className="absolute right-2 top-2 bottom-2 w-10 bg-primary rounded-xl flex items-center justify-center text-white hover:bg-primary/80 transition-colors disabled:opacity-50"
+          className="absolute right-1.5 top-1.5 bottom-1.5 w-9 bg-primary rounded-xl flex items-center justify-center text-white hover:bg-primary/80 transition-colors disabled:opacity-50"
         >
-          <Send size={18} />
+          <Send size={16} />
         </button>
       </div>
     </motion.div>
