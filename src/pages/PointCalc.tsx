@@ -159,4 +159,49 @@ export default function PointCalc() {
                 </div>
               )}
             </div>
-          </motion
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Leaderboard Table */}
+      <div className="px-4 py-2 mt-2">
+        <div className="flex justify-between items-end mb-4 px-1">
+          <h2 className="text-[11px] font-black text-gray-500 uppercase tracking-widest">{selectedGame} Standings</h2>
+          <span className="text-[9px] text-yellow-500 font-bold uppercase">{lastUpdated}</span>
+        </div>
+        <div className="bg-[#111] border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
+          <div className="grid grid-cols-12 gap-2 bg-[#1a1a1a] p-4 text-[10px] font-black text-gray-500 uppercase border-b border-white/5">
+            <div className="col-span-2 text-center">Rank</div>
+            <div className="col-span-6">{selectedGame === 'Valorant' ? 'Riot ID / Player' : 'Slot Leader'}</div>
+            <div className="col-span-2 text-center">{selectedGame === 'Valorant' ? 'Kills' : <Crosshair size={12} className="mx-auto" />}</div>
+            <div className="col-span-2 text-center text-yellow-500">Total</div>
+          </div>
+          <div className="flex flex-col">
+            {leaderboard.map((team, index) => (
+              <motion.div 
+                layout
+                key={index} 
+                className={`grid grid-cols-12 gap-2 p-4 items-center border-b border-white/5 last:border-0 ${index === 0 && team.total !== '-' ? 'bg-yellow-500/5' : ''}`}
+              >
+                <div className="col-span-2 text-center flex justify-center">
+                  {index === 0 && team.total !== '-' ? <Crown size={16} className="text-yellow-500 shadow-yellow-500" /> : <span className="text-xs font-black text-gray-600">#{team.rank}</span>}
+                </div>
+                <div className="col-span-6 font-bold text-xs truncate text-gray-200">{team.team}</div>
+                <div className="col-span-2 text-center text-xs text-gray-400 font-medium">{team.kills}</div>
+                <div className="col-span-2 text-center font-black text-sm text-yellow-500">{team.total}</div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Secure Badge */}
+      <div className="mx-4 mt-6 p-4 rounded-2xl bg-[#111] border border-white/5 flex items-center gap-3">
+        <Shield size={20} className="text-yellow-500" />
+        <p className="text-[10px] text-gray-400 font-medium uppercase leading-relaxed tracking-wider">
+          Accuracy check: AI is cross-referencing Lobby IGNs with Result Names to ensure <span className="text-yellow-500 font-bold">100% verified points</span> for {selectedGame}.
+        </p>
+      </div>
+    </div>
+  );
+}
