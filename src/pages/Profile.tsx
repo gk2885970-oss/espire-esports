@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion'; // Motion standard use kar rahe hain
+import { motion } from 'framer-motion'; 
 import { 
   User, 
   Settings, 
@@ -20,7 +20,7 @@ import {
 import { useStore } from '../store';
 import { getRatingSuggestion } from '../utils/ratingEngine';
 import { useNavigate } from 'react-router-dom';
-import { auth } from '../firebase'; // Firebase auth import karna zaroori hai
+import { auth } from '../firebase'; 
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -37,17 +37,11 @@ const Profile = () => {
     { label: 'Earnings', value: `₹${user.wallet.balance * 2}`, path: '/wallet' },
   ];
 
-  // --- LOGOUT LOGIC ---
   const handleLogout = async () => {
     try {
-      // 1. Firebase session khatam karo
       await auth.signOut();
-      
-      // 2. LocalStorage saaf karo (App.tsx isi 'token' ko check karta hai)
       localStorage.removeItem('token');
       localStorage.removeItem('userId');
-      
-      // 3. User ko Login page par dhaka de do
       navigate('/login');
     } catch (error) {
       console.error("Logout Error:", error);
@@ -71,38 +65,38 @@ const Profile = () => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
-      className="space-y-8 py-4 pb-10"
+      className="space-y-8 py-4 pb-10 max-w-4xl mx-auto px-4"
     >
       {/* Profile Header */}
       <div className="flex flex-col items-center text-center space-y-4">
         <div className="relative">
-          <div className="w-24 h-24 rounded-full p-1 bg-gradient-to-br from-primary via-secondary to-accent">
-            <div className="w-full h-full rounded-full bg-background p-1">
+          <div className="w-24 h-24 rounded-full p-1 bg-gradient-to-br from-yellow-500 via-yellow-300 to-yellow-600 shadow-[0_0_20px_rgba(250,204,21,0.5)]">
+            <div className="w-full h-full rounded-full bg-[#0a0a0a] p-1">
               <img 
                 src={user.photoURL || "https://picsum.photos/seed/user/200/200"} 
                 alt="Profile" 
-                className="w-full h-full rounded-full object-cover"
+                className="w-full h-full rounded-full object-cover filter grayscale opacity-90"
                 referrerPolicy="no-referrer"
               />
             </div>
           </div>
-          <button className="absolute bottom-0 right-0 bg-primary p-2 rounded-full border-2 border-background shadow-lg">
-            <Edit2 size={14} className="text-white" />
+          <button className="absolute bottom-0 right-0 bg-yellow-500 p-2 rounded-full border-2 border-[#0a0a0a] shadow-lg hover:bg-yellow-400 transition-colors">
+            <Edit2 size={14} className="text-black" />
           </button>
-          <div className="absolute -top-2 -left-2 bg-secondary px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest shadow-lg">
-            PRO
+          <div className="absolute -top-2 -left-2 bg-yellow-500 text-black px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest shadow-[0_0_10px_rgba(250,204,21,0.5)]">
+            ELITE
           </div>
         </div>
         <div>
-          <h2 className="text-2xl font-black tracking-tight">{user.displayName}</h2>
-          <p className="text-sm text-muted-foreground">{user.email}</p>
+          <h2 className="text-2xl font-black tracking-tight text-white">{user.displayName}</h2>
+          <p className="text-sm text-gray-400">{user.email}</p>
         </div>
         <div className="flex gap-2">
-          <button className="bg-muted/50 border border-white/5 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-muted transition-colors">
+          <button className="bg-yellow-500/10 border border-yellow-500/30 px-4 py-2 rounded-xl text-xs font-bold text-yellow-500 flex items-center gap-2 hover:bg-yellow-500/20 transition-colors">
             <Share2 size={14} /> Share Profile
           </button>
-          <button className="bg-muted/50 border border-white/5 p-2 rounded-xl hover:bg-muted transition-colors">
-            <Settings size={18} className="text-muted-foreground" />
+          <button className="bg-[#111] border border-white/5 p-2 rounded-xl hover:bg-white/5 transition-colors">
+            <Settings size={18} className="text-gray-400 hover:text-white" />
           </button>
         </div>
       </div>
@@ -110,35 +104,35 @@ const Profile = () => {
       {/* AI Rating Section */}
       <section 
         onClick={() => navigate('/profile/stats')}
-        className="glass-card p-6 rounded-3xl border-primary/20 bg-primary/5 relative overflow-hidden cursor-pointer hover:border-primary/50 transition-all"
+        className="glass-card p-6 rounded-3xl border border-yellow-500/20 bg-[#111] relative overflow-hidden cursor-pointer hover:border-yellow-500/50 transition-all shadow-[0_0_15px_rgba(250,204,21,0.05)]"
       >
         <div className="absolute top-0 right-0 p-4 opacity-10">
-          <Cpu size={80} className="text-primary" />
+          <Cpu size={80} className="text-yellow-500" />
         </div>
         <div className="relative z-10">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-lg font-black flex items-center gap-2">
-                AI Rating: <span className="text-primary">{user.stats.aiRating}</span>
+              <h3 className="text-lg font-black flex items-center gap-2 text-white">
+                AI Rating: <span className="text-yellow-500">{user.stats.aiRating}</span>
               </h3>
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Rank: {user.stats.aiRank}</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Rank: {user.stats.aiRank}</p>
             </div>
             <div className="text-right">
-              <TrendingUp size={24} className="text-emerald-500 ml-auto" />
-              <p className="text-[10px] text-emerald-500 font-bold uppercase">+5.2% this week</p>
+              <TrendingUp size={24} className="text-yellow-500 ml-auto" />
+              <p className="text-[10px] text-yellow-500 font-bold uppercase">+5.2% this week</p>
             </div>
           </div>
           
-          <div className="w-full h-3 bg-muted rounded-full mb-4 overflow-hidden border border-white/5">
+          <div className="w-full h-3 bg-[#050505] rounded-full mb-4 overflow-hidden border border-white/5">
             <motion.div 
               initial={{ width: 0 }}
               animate={{ width: `${user.stats.aiRating}%` }}
-              className="h-full bg-gradient-to-r from-primary to-secondary shadow-[0_0_15px_rgba(139,92,246,0.5)]"
+              className="h-full bg-gradient-to-r from-yellow-600 to-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.8)]"
             />
           </div>
           
-          <div className="bg-black/40 p-3 rounded-2xl border border-white/5">
-            <p className="text-[11px] text-muted-foreground leading-relaxed italic">
+          <div className="bg-[#050505] p-3 rounded-2xl border border-white/5">
+            <p className="text-[11px] text-gray-400 leading-relaxed italic font-medium">
               "{ratingSuggestion}"
             </p>
           </div>
@@ -151,45 +145,47 @@ const Profile = () => {
           <div 
             key={stat.label} 
             onClick={() => navigate(stat.path)}
-            className="glass-card p-3 rounded-2xl border-white/5 text-center cursor-pointer hover:bg-muted/30 transition-colors"
+            className="glass-card p-3 rounded-2xl border border-white/5 bg-[#111] text-center cursor-pointer hover:border-yellow-500/30 transition-colors"
           >
             <p className="text-lg font-black text-white">{stat.value}</p>
-            <p className="text-[8px] text-muted-foreground uppercase font-bold tracking-widest">{stat.label}</p>
+            <p className="text-[8px] text-yellow-500 uppercase font-bold tracking-widest">{stat.label}</p>
           </div>
         ))}
       </div>
 
       {/* Gaming IDs */}
       <section>
-        <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-4">Gaming IDs</h3>
+        <h3 className="text-sm font-bold text-yellow-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+          <Gamepad2 size={16}/> Linked Accounts
+        </h3>
         <div className="space-y-3">
           {(['bgmi', 'valorant', 'freefire'] as const).map(game => (
-            <div key={game} className="glass-card p-4 rounded-2xl border-white/5 flex items-center justify-between group transition-all">
+            <div key={game} className="glass-card p-4 rounded-2xl border border-white/5 bg-[#111] flex items-center justify-between group transition-all hover:border-yellow-500/20">
               <div className="flex items-center gap-4 flex-1">
-                <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center">
-                  <Gamepad2 size={20} className="text-primary" />
+                <div className="w-10 h-10 rounded-xl bg-[#050505] flex items-center justify-center border border-white/5 group-hover:border-yellow-500/30 transition-colors">
+                  <Gamepad2 size={18} className="text-yellow-500" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">{game}</p>
+                  <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">{game}</p>
                   {editingGame === game ? (
                     <div className="flex items-center gap-2 mt-1">
                       <input 
                         type="text" 
                         value={tempId}
                         onChange={(e) => setTempId(e.target.value)}
-                        className="bg-muted/50 border border-primary/50 rounded-lg px-2 py-1 text-sm w-full focus:outline-none"
+                        className="bg-[#050505] border border-yellow-500/50 rounded-lg px-2 py-1 text-sm w-full focus:outline-none text-white"
                         autoFocus
                       />
-                      <button onClick={handleSave} className="p-1 text-emerald-500"><Check size={18} /></button>
-                      <button onClick={() => setEditingGame(null)} className="p-1 text-red-500"><X size={18} /></button>
+                      <button onClick={handleSave} className="p-1 text-green-500 hover:text-green-400"><Check size={18} /></button>
+                      <button onClick={() => setEditingGame(null)} className="p-1 text-red-500 hover:text-red-400"><X size={18} /></button>
                     </div>
                   ) : (
-                    <p className="text-sm font-bold">{user.gamingIds[game] || 'Not Set'}</p>
+                    <p className="text-sm font-bold text-gray-200">{user.gamingIds[game] || 'Not Set'}</p>
                   )}
                 </div>
               </div>
               {!editingGame && (
-                <button onClick={() => handleEdit(game)} className="p-2 text-muted-foreground hover:text-primary transition-colors">
+                <button onClick={() => handleEdit(game)} className="p-2 text-gray-500 hover:text-yellow-500 transition-colors">
                   <Edit2 size={16} />
                 </button>
               )}
@@ -201,24 +197,24 @@ const Profile = () => {
       {/* Achievements */}
       <section 
         onClick={() => navigate('/profile/achievements')}
-        className="cursor-pointer group"
+        className="cursor-pointer group bg-[#111] border border-white/5 p-4 rounded-2xl hover:border-yellow-500/20 transition-all"
       >
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest group-hover:text-primary transition-colors">Achievements</h3>
-          <span className="text-[10px] text-primary font-bold">12 / 50</span>
+          <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest group-hover:text-yellow-500 transition-colors">Trophy Cabinet</h3>
+          <span className="text-[10px] text-yellow-500 font-bold bg-yellow-500/10 px-2 py-1 rounded-md">12 / 50</span>
         </div>
         <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
           {[
             { icon: Trophy, color: 'text-yellow-500', label: 'First Win' },
-            { icon: Zap, color: 'text-primary', label: '10 Match Streak' },
-            { icon: Shield, color: 'text-secondary', label: 'Verified Pro' },
-            { icon: Star, color: 'text-accent', label: 'Top 100' },
+            { icon: Zap, color: 'text-yellow-400', label: '10 Streak' },
+            { icon: Shield, color: 'text-gray-400', label: 'Verified' },
+            { icon: Star, color: 'text-yellow-500', label: 'Top 100' },
           ].map((ach, i) => (
             <div key={i} className="min-w-[80px] flex flex-col items-center gap-2">
-              <div className="w-16 h-16 rounded-2xl glass-card border-white/5 flex items-center justify-center group-hover:border-primary/30 transition-all">
-                <ach.icon className={ach.color} size={32} />
+              <div className="w-16 h-16 rounded-2xl bg-[#050505] border border-white/5 flex items-center justify-center group-hover:border-yellow-500/30 transition-all shadow-inner">
+                <ach.icon className={ach.color} size={28} />
               </div>
-              <span className="text-[8px] font-bold text-center uppercase tracking-tighter text-muted-foreground">{ach.label}</span>
+              <span className="text-[9px] font-bold text-center uppercase tracking-tighter text-gray-400">{ach.label}</span>
             </div>
           ))}
         </div>
@@ -226,31 +222,29 @@ const Profile = () => {
 
       {/* Menu Options */}
       <div className="space-y-2">
-        {/* Baaki buttons wahi rehnge... */}
-        <button onClick={() => navigate('/privacy')} className="w-full flex items-center justify-between p-4 glass-card rounded-2xl border-white/5 hover:bg-muted/30 transition-colors">
+        <button onClick={() => navigate('/privacy')} className="w-full flex items-center justify-between p-4 bg-[#111] rounded-2xl border border-white/5 hover:border-white/20 transition-colors">
           <div className="flex items-center gap-3">
-            <Shield size={18} className="text-muted-foreground" />
-            <span className="text-sm font-medium">Privacy & Security</span>
+            <Shield size={18} className="text-gray-400" />
+            <span className="text-sm font-medium text-gray-200">Privacy & Security</span>
           </div>
-          <ChevronRight size={16} className="text-muted-foreground" />
+          <ChevronRight size={16} className="text-gray-500" />
         </button>
         
-        <button onClick={() => navigate('/premium')} className="w-full flex items-center justify-between p-4 glass-card rounded-2xl border-white/5 hover:bg-muted/30 transition-colors">
+        <button onClick={() => navigate('/premium')} className="w-full flex items-center justify-between p-4 bg-gradient-to-r from-yellow-500/10 to-[#111] rounded-2xl border border-yellow-500/20 hover:border-yellow-500/50 transition-colors">
           <div className="flex items-center gap-3">
-            <Star size={18} className="text-muted-foreground" />
-            <span className="text-sm font-medium">Premium Subscription</span>
+            <Star size={18} className="text-yellow-500" />
+            <span className="text-sm font-bold text-yellow-500 tracking-wide">ESPIRE Premium</span>
           </div>
-          <ChevronRight size={16} className="text-muted-foreground" />
+          <ChevronRight size={16} className="text-yellow-500" />
         </button>
 
-        {/* LOGOUT BUTTON FIXED HERE */}
         <button 
           onClick={handleLogout} 
-          className="w-full flex items-center justify-between p-4 glass-card rounded-2xl border-white/5 text-red-500 hover:bg-red-500/10 transition-colors"
+          className="w-full flex items-center justify-between p-4 bg-[#111] rounded-2xl border border-red-500/20 text-red-500 hover:bg-red-500/10 transition-colors mt-4"
         >
           <div className="flex items-center gap-3">
             <LogOut size={18} />
-            <span className="text-sm font-medium">Logout</span>
+            <span className="text-sm font-bold uppercase tracking-wider">Logout Session</span>
           </div>
         </button>
       </div>
