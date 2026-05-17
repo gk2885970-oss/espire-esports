@@ -50,21 +50,22 @@ const BottomNav = () => {
   ];
 
   return (
-    <nav className="nav-blur flex items-center justify-around px-4 pb-2">
+    // FIX: Added fixed, max-w-[430px], mx-auto to lock it inside the mobile frame
+    <nav className="fixed bottom-0 w-full max-w-[430px] mx-auto left-0 right-0 nav-blur flex items-center justify-around px-4 pb-4 pt-2 z-50 border-t border-white/5 bg-background/90 backdrop-blur-lg">
       {navItems.map((item) => {
-        const isActive = location.pathname === item.path;
+        const isActive = location.pathname.includes(item.path);
         return (
           <Link
             key={item.path}
             to={item.path}
-            className={`flex flex-col items-center gap-1 transition-colors ${isActive ? 'text-primary' : 'text-muted-foreground'}`}
+            className={`flex flex-col items-center gap-1 transition-colors relative ${isActive ? 'text-primary' : 'text-muted-foreground'}`}
           >
             <item.icon size={24} className={isActive ? 'neon-text-purple' : ''} />
             <span className="text-[10px] font-medium uppercase tracking-wider">{item.label}</span>
             {isActive && (
               <motion.div
                 layoutId="nav-indicator"
-                className="absolute bottom-1 w-1 h-1 rounded-full bg-primary"
+                className="absolute -bottom-2 w-1 h-1 rounded-full bg-primary"
               />
             )}
           </Link>
@@ -75,11 +76,11 @@ const BottomNav = () => {
 };
 
 const Header = () => (
-  <header className="flex items-center justify-between px-6 py-4 sticky top-0 bg-background/80 backdrop-blur-md z-40">
+  <header className="flex items-center justify-between px-6 py-4 sticky top-0 bg-background/80 backdrop-blur-md z-40 border-b border-white/5 w-full">
     <div className="flex items-center gap-3">
       <div className="w-10 h-10 flex items-center justify-center">
         <img
-          src="https://raw.githubusercontent.com/EspireEsports/assets/main/logo.png"
+          src="/logo.png" // Updated to use your local clean logo
           alt="Espire Logo"
           className="w-full h-full object-contain filter drop-shadow-[0_0_8px_rgba(139,92,246,0.5)]"
           onError={(e) => {
@@ -106,47 +107,52 @@ const Header = () => (
 export default function App() {
   return (
     <Router>
-      <div className="mobile-container bg-background">
+      {/* MAC/DESKTOP WRAPPER (Black background) */}
+      <div className="min-h-screen w-full bg-black flex justify-center font-sans text-white">
+        
+        {/* MOBILE FRAME (Centered 430px Box) */}
+        <div className="w-full max-w-[430px] min-h-screen bg-background relative shadow-[0_0_50px_rgba(0,0,0,0.5)] border-x border-white/10 flex flex-col overflow-x-hidden">
+          
+          {isLoggedIn() && <Header />}
 
-        {/* Header — login page pe nahi dikhega */}
-        {isLoggedIn() && <Header />}
+          {/* Main content area */}
+          <main className="flex-1 overflow-y-auto pb-24 px-4 scroll-smooth" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+            <AnimatePresence mode="wait">
+              <Routes>
+                {/* Login Route — public */}
+                <Route path="/login" element={<Login />} />
 
-        <main className="flex-1 overflow-y-auto pb-24 px-4">
-          <AnimatePresence mode="wait">
-            <Routes>
-              {/* Login Route — public */}
-              <Route path="/login" element={<Login />} />
+                {/* Protected Routes */}
+                <Route path="/" element={isLoggedIn() ? <Dashboard /> : <Navigate to="/login" />} />
+                <Route path="/home" element={isLoggedIn() ? <Dashboard /> : <Navigate to="/login" />} />
+                <Route path="/play" element={isLoggedIn() ? <TournamentList /> : <Navigate to="/login" />} />
+                <Route path="/ai" element={isLoggedIn() ? <AICoach /> : <Navigate to="/login" />} />
+                <Route path="/ai-coach" element={isLoggedIn() ? <AICoach /> : <Navigate to="/login" />} />
+                <Route path="/profile" element={isLoggedIn() ? <Profile /> : <Navigate to="/login" />} />
+                <Route path="/profile/stats" element={isLoggedIn() ? <Performance /> : <Navigate to="/login" />} />
+                <Route path="/profile/tournaments" element={isLoggedIn() ? <TournamentList /> : <Navigate to="/login" />} />
+                <Route path="/profile/achievements" element={isLoggedIn() ? <Achievements /> : <Navigate to="/login" />} />
+                <Route path="/tournament/:id" element={isLoggedIn() ? <TournamentAutomation /> : <Navigate to="/login" />} />
+                <Route path="/leaderboard" element={isLoggedIn() ? <Leaderboard /> : <Navigate to="/login" />} />
+                <Route path="/wallet" element={isLoggedIn() ? <WalletPage /> : <Navigate to="/login" />} />
+                <Route path="/live-session" element={isLoggedIn() ? <LiveSession /> : <Navigate to="/login" />} />
+                <Route path="/privacy" element={isLoggedIn() ? <Privacy /> : <Navigate to="/login" />} />
+                <Route path="/premium" element={isLoggedIn() ? <Premium /> : <Navigate to="/login" />} />
+                <Route path="/community" element={isLoggedIn() ? <Community /> : <Navigate to="/login" />} />
+                <Route path="/live-coaching" element={isLoggedIn() ? <LiveCoaching /> : <Navigate to="/login" />} />
+                <Route path="/pointcalc" element={isLoggedIn() ? <PointCalc /> : <Navigate to="/login" />} />
+                <Route path="/training/:moduleId" element={isLoggedIn() ? <TrainingModuleContainer /> : <Navigate to="/login" />} />
+                <Route path="/training/drill/:id" element={isLoggedIn() ? <DrillDetail /> : <Navigate to="/login" />} />
+                <Route path="/training/aim" element={isLoggedIn() ? <AimTrainerGame /> : <Navigate to="/login" />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </AnimatePresence>
+          </main>
 
-              {/* Protected Routes */}
-              <Route path="/" element={isLoggedIn() ? <Dashboard /> : <Navigate to="/login" />} />
-              <Route path="/home" element={isLoggedIn() ? <Dashboard /> : <Navigate to="/login" />} />
-              <Route path="/play" element={isLoggedIn() ? <TournamentList /> : <Navigate to="/login" />} />
-              <Route path="/ai" element={isLoggedIn() ? <AICoach /> : <Navigate to="/login" />} />
-              <Route path="/ai-coach" element={isLoggedIn() ? <AICoach /> : <Navigate to="/login" />} />
-              <Route path="/profile" element={isLoggedIn() ? <Profile /> : <Navigate to="/login" />} />
-              <Route path="/profile/stats" element={isLoggedIn() ? <Performance /> : <Navigate to="/login" />} />
-              <Route path="/profile/tournaments" element={isLoggedIn() ? <TournamentList /> : <Navigate to="/login" />} />
-              <Route path="/profile/achievements" element={isLoggedIn() ? <Achievements /> : <Navigate to="/login" />} />
-              <Route path="/tournament/:id" element={isLoggedIn() ? <TournamentAutomation /> : <Navigate to="/login" />} />
-              <Route path="/leaderboard" element={isLoggedIn() ? <Leaderboard /> : <Navigate to="/login" />} />
-              <Route path="/wallet" element={isLoggedIn() ? <WalletPage /> : <Navigate to="/login" />} />
-              <Route path="/live-session" element={isLoggedIn() ? <LiveSession /> : <Navigate to="/login" />} />
-              <Route path="/privacy" element={isLoggedIn() ? <Privacy /> : <Navigate to="/login" />} />
-              <Route path="/premium" element={isLoggedIn() ? <Premium /> : <Navigate to="/login" />} />
-              <Route path="/community" element={isLoggedIn() ? <Community /> : <Navigate to="/login" />} />
-              <Route path="/live-coaching" element={isLoggedIn() ? <LiveCoaching /> : <Navigate to="/login" />} />
-              <Route path="/pointcalc" element={isLoggedIn() ? <PointCalc /> : <Navigate to="/login" />} />
-              <Route path="/training/:moduleId" element={isLoggedIn() ? <TrainingModuleContainer /> : <Navigate to="/login" />} />
-              <Route path="/training/drill/:id" element={isLoggedIn() ? <DrillDetail /> : <Navigate to="/login" />} />
-              <Route path="/training/aim" element={isLoggedIn() ? <AimTrainerGame /> : <Navigate to="/login" />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </AnimatePresence>
-        </main>
+          {/* BottomNav */}
+          {isLoggedIn() && <BottomNav />}
 
-        {/* BottomNav — login page pe nahi dikhega */}
-        {isLoggedIn() && <BottomNav />}
-
+        </div>
       </div>
     </Router>
   );
