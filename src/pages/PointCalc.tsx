@@ -5,7 +5,7 @@ import { Trophy, UploadCloud, Cpu, Crosshair, Crown, Shield, CheckCircle, Image 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // 2. API Key Setup (Yahan apni key dalo)
-const genAI = new GoogleGenerativeAI("YOUR_GEMINI_API_KEY_HERE");
+const genAI = new GoogleGenerativeAI("AIzaSyAVQzghWJxoh5IgKMzQSU3DsZ42j1KEp5E");
 
 const GAMES = ['BGMI', 'Free Fire', 'Valorant', 'Stumble Guys'];
 
