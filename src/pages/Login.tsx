@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   auth,
+  db, // MAKE SURE db IS EXPORTED FROM YOUR firebase.js FILE
   googleProvider,
   signInWithPopup,
   signInAnonymously,
   RecaptchaVerifier,
   signInWithPhoneNumber
 } from '../firebase';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { CheckCircle, AlertTriangle } from 'lucide-react';
 
 export default function Login() {
@@ -19,7 +21,7 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // BUG FIX (Previous): Logout user if already logged in when visiting login page
+  // Clear old sessions on load
   useEffect(() => {
     localStorage.removeItem('token');
     localStorage.removeItem('userId');
@@ -37,13 +39,41 @@ export default function Login() {
     }
   }, []);
 
+  // --- 🔥 FIRESTORE DATABASE MAGIC 🔥 ---
+  // Ye function naye user ko database mein save karega ₹450 ke sath
+  const checkAndCreateUser = async (user: any) => {
+    const userRef = doc(db, 'users', user.uid);
+    const userSnap = await getDoc(userRef);
+
+    if (!userSnap.exists()) {
+      console.log("New User Detected! Creating Database Profile...");
+      await setDoc(userRef, {
+        uid: user.uid,
+        email: user.email || `guest_${user.uid.slice(0,5)}@espire.com`,
+        displayName: user.displayName || 'ESPIRE Elite',
+        photoURL: user.photoURL || 'https://picsum.photos/seed/user/200/200',
+        wallet: { balance: 450 }, // 💰 Welcome Bonus
+        stats: {
+          tournamentsPlayed: 0,
+          tournamentsWon: 0,
+          aiRating: 75,
+          aiRank: 'Scout',
+          favGame: 'Free Fire'
+        },
+        gamingIds: { bgmi: '', freefire: '', valorant: '' },
+        createdAt: serverTimestamp()
+      });
+    }
+  };
+
   // 1. Google Login
   const handleGoogleLogin = async () => {
     setLoading(true);
     try {
       const result = await signInWithPopup(auth, googleProvider);
+      await checkAndCreateUser(result.user); // Database Sync
       localStorage.setItem('token', result.user.uid);
-      window.location.href = '/home'; // Hard redirect for reliability
+      window.location.href = '/home'; 
     } catch (e: any) { 
       setError('Google Login failed. Please try again.'); 
     }
@@ -75,8 +105,9 @@ export default function Login() {
     setError('');
     try {
       const result = await confirm.confirm(otp);
+      await checkAndCreateUser(result.user); // Database Sync
       localStorage.setItem('token', result.user.uid);
-      window.location.href = '/home'; // Hard redirect for reliability
+      window.location.href = '/home'; 
     } catch (e: any) {
       setError('Invalid OTP code. Try again.');
     }
@@ -88,8 +119,9 @@ export default function Login() {
     setLoading(true);
     try {
       const result = await signInAnonymously(auth);
+      await checkAndCreateUser(result.user); // Database Sync
       localStorage.setItem('token', result.user.uid);
-      window.location.href = '/home'; // Hard redirect for reliability
+      window.location.href = '/home'; 
     } catch (e: any) { 
       setError('Guest entry failed. Try another method.'); 
     }
@@ -111,7 +143,7 @@ export default function Login() {
               height: 'auto', 
               margin: '0 auto 15px', 
               display: 'block',
-              filter: 'drop-shadow(0 0 10px rgba(139, 92, 246, 0.5))'
+              filter: 'drop-shadow(0 0 15px rgba(250, 204, 21, 0.4))' // Gold Shadow
             }} 
           />
           <p style={subtitleText}>Login to compete. Manage your squad.</p>
@@ -133,7 +165,7 @@ export default function Login() {
                   type="tel" placeholder="Mobile Number" 
                   value={phone} onChange={e => setPhone(e.target.value.replace(/\D/, ''))}
                   maxLength={10}
-                  style={textInputField} // CRUCIAL FIX APPLIED HERE
+                  style={textInputField} 
                 />
               </div>
               <button onClick={handleSendOTP} disabled={loading} style={primaryActionBtn}>
@@ -143,7 +175,7 @@ export default function Login() {
           ) : (
             <div style={otpVerifyWrapper}>
               <div style={verifyHeaderFlex}>
-                <CheckCircle size={18} color="#7c3aed" />
+                <CheckCircle size={18} color="#facc15" />
                 <span style={phoneVerifyLabel}>Verify number +91 {phone}</span>
                 <span onClick={() => setStep('input')} style={editPhoneLink}>Edit</span>
               </div>
@@ -182,13 +214,13 @@ export default function Login() {
 
       {/* FOOTER */}
       <div style={loginFooter}>
-        <span>Privacy Policy</span> | <span>Terms of Service</span>
+        <span style={{color: '#facc15'}}>Privacy Policy</span> | <span style={{color: '#facc15'}}>Terms of Service</span>
       </div>
     </div>
   );
 }
 
-// --- Styles (Full Mobile Optimized, Inline Styles) ---
+// --- Styles (Dark & Gold Optimized) ---
 
 const fullScreenContainer: any = { 
   minHeight: '100vh', 
@@ -213,39 +245,38 @@ const centeredContent: any = {
 };
 
 const brandingSection: any = { marginBottom: '50px', textAlign: 'center' };
-const subtitleText: any = { color: '#888', fontSize: '13px', marginTop: '10px', textTransform: 'uppercase', letterSpacing: '1px' };
+const subtitleText: any = { color: '#facc15', fontSize: '11px', marginTop: '10px', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold' };
 
 const loginMethodsStack: any = { display: 'flex', flexDirection: 'column', gap: '20px', width: '100%' };
 
 const commonPillBtn: any = { 
   width: '100%', 
   padding: '18px', 
-  borderRadius: '15px', // Matching iPhone screenshot radius
+  borderRadius: '15px', 
   cursor: 'pointer', 
   fontSize: '15px', 
-  fontWeight: '600', 
+  fontWeight: '800', 
   border: 'none', 
   display: 'flex', 
   alignItems: 'center', 
   justifyContent: 'center', 
   gap: '12px',
-  boxSizing: 'border-box'
+  boxSizing: 'border-box',
+  textTransform: 'uppercase'
 };
 
 const googlePillBtn: any = { ...commonPillBtn, background: '#fff', color: '#000' };
-const primaryActionBtn: any = { ...commonPillBtn, background: '#7c3aed', color: '#fff' };
+// PRIMARY COLOR CHANGED TO GOLD (#facc15)
+const primaryActionBtn: any = { ...commonPillBtn, background: '#facc15', color: '#000', boxShadow: '0 0 15px rgba(250, 204, 21, 0.3)' };
 
 const phoneInputWrapper: any = { display: 'flex', flexDirection: 'column', gap: '10px' };
 const combinedInputField: any = { display: 'flex', background: '#111', borderRadius: '15px', border: '1px solid #333', overflow: 'hidden', boxSizing: 'border-box' };
 const phonePrefix: any = { padding: '18px 12px', color: '#888', fontSize: '15px', fontWeight: 'bold' };
 
-// ****************************************************
-// *** THE CRUCIAL FIX FOR ANDROID UI BREAKAGE ***
-// ****************************************************
 const textInputField: any = { 
   flex: 1, 
-  background: 'transparent', // Attempt transparent
-  backgroundColor: 'transparent', // Reinforce transparent
+  background: 'transparent', 
+  backgroundColor: 'transparent', 
   border: 'none', 
   padding: '18px', 
   color: '#fff', 
@@ -254,14 +285,10 @@ const textInputField: any = {
   letterSpacing: '0.5px',
   boxSizing: 'border-box',
   margin: 0,
-  
-  // These properties strip native Android styling
   WebkitAppearance: 'none', 
   MozAppearance: 'none',
   appearance: 'none',
-  
-  // Force background removal for Chrome on Android
-  WebkitBoxShadow: '0 0 0px 1000px #111 inset', // Overrides yellow autofill and default backgrounds
+  WebkitBoxShadow: '0 0 0px 1000px #111 inset', 
   textFillColor: '#fff',
   WebkitTextFillColor: '#fff'
 };
@@ -269,15 +296,15 @@ const textInputField: any = {
 const otpVerifyWrapper: any = { display: 'flex', flexDirection: 'column', gap: '15px', textAlign: 'center' };
 const verifyHeaderFlex: any = { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '10px' };
 const phoneVerifyLabel: any = { color: '#ccc', fontSize: '12px', fontWeight: '600' };
-const editPhoneLink: any = { color: '#7c3aed', fontSize: '12px', textDecoration: 'underline', cursor: 'pointer', marginLeft: '5px' };
-const otpInputPill: any = { ...textInputField, background: '#111', borderRadius: '15px', border: '1px solid #7c3aed', textAlign: 'center', fontSize: '24px', fontWeight: 'bold', letterSpacing: '10px', padding: '18px 10px' };
+const editPhoneLink: any = { color: '#facc15', fontSize: '12px', textDecoration: 'underline', cursor: 'pointer', marginLeft: '5px' };
+const otpInputPill: any = { ...textInputField, background: '#111', borderRadius: '15px', border: '1px solid #facc15', textAlign: 'center', fontSize: '24px', fontWeight: 'bold', letterSpacing: '10px', padding: '18px 10px', color: '#facc15' };
 
 const errorCardStyle: any = { color: '#ff4b4b', fontSize: '12px', marginTop: '10px', padding: '12px', background: 'rgba(255,0,0,0.1)', borderRadius: '15px', border: '1px solid rgba(255,0,0,0.2)', display: 'flex', alignItems: 'center', gap: '8px', boxSizing: 'border-box' };
 
 const guestLoginRow: any = { marginTop: '60px', width: '100%', textAlign: 'center' };
 const dividerFlex: any = { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginBottom: '20px' };
 const dividerLine: any = { flex: 1, height: '1px', background: '#333' };
-const orText: any = { color: '#444', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase' };
-const guestOutlinedBtn: any = { width: '100%', padding: '16px', borderRadius: '15px', background: 'transparent', color: '#aaa', border: '1px solid #333', cursor: 'pointer', fontSize: '14px', fontWeight: '600', boxSizing: 'border-box' };
+const orText: any = { color: '#666', fontSize: '12px', fontWeight: 'bold', textTransform: 'uppercase' };
+const guestOutlinedBtn: any = { width: '100%', padding: '16px', borderRadius: '15px', background: '#111', color: '#888', border: '1px solid #333', cursor: 'pointer', fontSize: '14px', fontWeight: 'bold', boxSizing: 'border-box', textTransform: 'uppercase' };
 
-const loginFooter: any = { width: '100%', textAlign: 'center', color: '#444', fontSize: '11px', paddingBottom: '10px', marginTop: '30px' };
+const loginFooter: any = { width: '100%', textAlign: 'center', color: '#444', fontSize: '11px', paddingBottom: '10px', marginTop: '30px', fontWeight: 'bold' };
