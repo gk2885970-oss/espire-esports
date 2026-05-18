@@ -8,6 +8,8 @@ import {
   RecaptchaVerifier, 
   signInWithPhoneNumber 
 } from "firebase/auth";
+// NAYA IMPORT: Database ke liye
+import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDI6Z53repPzBbasbbZEdaZnndKIuuEdT4",
@@ -28,6 +30,9 @@ export const analytics = getAnalytics(app);
 // Initialize Auth & Google Provider
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+
+// 🔥 NAYA FIX: Initialize Firestore Database (Taaki data save ho sake)
+export const db = getFirestore(app);
 
 // YAHAN HAI MAIN FIX: Exporting the functions for Login.tsx
 export { 
